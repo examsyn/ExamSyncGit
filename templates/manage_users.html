@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>User Management</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .sidebar {
+            height: 100%;
+            width: 256px;
+            position: fixed;
+            top: -3px;
+            left: 0;
+            background-color: #1A1851;
+            padding-top: 20px;
+            transform: translateX(0);
+            overflow: auto;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+            border-top-right-radius: 30px;
+            border-top: 3px solid #FCB316;
+            border-right: 3px solid #FCB316;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar.closed {
+            transform: translateX(-250px);
+        }
+
+        .sidebar .user-info {
+            margin: 20px;
+        }
+
+        .sidebar .user-info h2 {
+            color: #fff;
+            text-align: center;
+        }
+
+        .sidebar .user-info h5 {
+            color: #fff;
+            text-align: center;
+        }
+
+        .sidebar nav a {
+            display: block;
+            padding-left: 10px;
+            padding-right: 5px;
+            padding-top: 5px;
+            padding-bottom: 5px;
+            color: #fff;
+            text-decoration: none;
+            background-color: #1A1851;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+            margin-right: 15px;
+            margin-left: 15px;
+        }
+
+        .sidebar nav a:hover {
+            background-color: #0d1233;
+            border-radius: 5px;
+        }
+
+        .main-content {
+            margin-left: 250px;
+            margin-bottom: 50px;
+            padding: 20px;
+            transition: margin-left 0.3s ease;
+        }
+
+        .main-content.sidebar-closed {
+            margin-left: 0;
+        }
+       
+
+        .sidebar-toggle {
+            position: fixed;
+            top: -5px;
+            left: -5px;
+            cursor: pointer;
+            background-color: #FCB316;
+            color: #fff;
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 1000;
+        }
+
+        .logout-button {
+            display: block;
+            margin: 20px;
+            padding: 10px;
+            background-color: #FCB316;
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+
+        .menutext {
+            display: block;
+            padding-left: 10px;
+            padding-right: 5px;
+            padding-top: 5px;
+            padding-bottom: 5px;
+            color: #FCB316;
+            background-color: #1A1851;
+            margin-right: 15px;
+            margin-left: 15px;
+        }
+
+        .footer {
+            background-color: #FCB316;
+            color: white;
+            text-align: center;
+            align-items: center;
+            padding: 15px 0;
+            position: fixed;
+            bottom: 0;
+            height: 30px;
+            width: 100%;
+            z-index: 0;
+        }
+        
+        .user-list-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .user-list-table th, .user-list-table td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        
+        .user-list-table th {
+            background-color: #1A1851;
+            color: #fff;
+        }
+        
+        .search-form {
+            margin-bottom: 20px;
+            text-align: right;
+        }
+        
+        .search-form input[type="text"] {
+            padding: 5px;
+            width: 200px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        
+        .search-form button {
+            padding: 5px 10px;
+            background-color: #FCB316;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+        }
+        
+        .search-form button:hover {
+            background-color: #e0a700;
+        }
+
+        .form-container {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        .form-container h2 {
+            color: #1A1851;
+            text-align: center;
+        }
+
+        .form-container form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .form-row div {
+            flex: 1;
+        }
+
+        .form-container label {
+            font-weight: bold;
+            color: #1A1851;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .form-container input[type="text"],
+        .form-container input[type="email"],
+        .form-container input[type="password"],
+        .form-container input[type="tel"],
+        .form-container select {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .form-container button {
+            background-color: #FCB316;
+            color: #fff;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        .form-container button:hover {
+            background-color: #e0a200;
+        }
+
+        .form-errors {
+            color: red;
+            margin-bottom: 20px;
+        }
+
+        img {
+            width: 80%;
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            height: auto;
+            margin-bottom: 40px;
+        }
+
+        h6 {
+            width: 80%;
+            color: #fff;
+            position: absolute;
+            text-align: center;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            height: auto;
+            margin-bottom: 30px;
+        }
+
+        .popup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            max-width: 500px;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            z-index: 2000;
+            box-sizing: border-box;
+            border: 3px solid #FCB316;
+        }
+        
+        .popup.active {
+            display: block;
+        }
+        
+        .popup-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+        
+        .popup-overlay.active {
+            display: block;
+        }
+        
+        .popup .close-popup {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 20px;
+            cursor: pointer;
+            color: #1A1851;
+        }
+        
+        .popup h2 {
+            text-align: center;
+            color: #1A1851;
+            margin-bottom: 40px;
+        }
+
+        .popup h1 {
+            text-align: center;
+            color: #1A1851;
+            margin-bottom: 40px;
+        }
+        
+        .popup form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .popup .form-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .popup .form-row div {
+            flex: 1;
+        }
+        
+        .popup label {
+            font-weight: bold;
+            color: #1A1851;
+            margin-bottom: 5px;
+            display: block;
+        }
+        
+        .popup input,
+        .popup select,
+        .popup button {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        
+        .popup button {
+            background-color: #1A1851;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            padding: 10px;
+            margin-top: 10px;
+        }
+        
+        .popup button:hover {
+            background-color: #e0a200;
+        }
+
+        .status-active {
+            color: green;
+        }
+    
+        .status-inactive {
+            color: red;
+        }
+
+        .edit-user-form {
+            display: none;
+        }
+
+        .edit-user-form.active {
+            display: block;
+        }        
+
+        .required-indicator {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    {% include 'sidebars/sidebar-administrator.html' %}
+
+    <div class="sidebar-toggle" onclick="toggleSidebar()">☰</div>
+
+    <div class="main-content">
+        <h1>User Management</h1>
+        <div class="search-form">
+            <input type="text" id="search-input" placeholder="SEARCH FOR USER" value="{{ search_query }}">
+            <button id="search-button">Search</button>
+            <button id="create-user-button" style="background-color: #075812;">Create User</button>
+        </div>
+        <div>
+            {% if error_message %}
+                <div class="form-errors">
+                    <p>{{ error_message }}</p>
+                </div>
+            {% endif %}
+        </div>
+        <table class="user-list-table" id="user-list-table">
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>First Name</th>
+                    <th>Middle Initial</th>
+                    <th>Last Name</th>
+                    <th>Email Address</th>
+                    <th>Contact Number</th>
+                    <th>Status</th>
+                    <th>Roles</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="user-list-body">
+                {% for user_with_roles in users_with_roles %}
+                    <tr data-user-id="{{ user_with_roles.user.user_id }}">
+                        <td>{{ user_with_roles.user.username }}</td>
+                        <td>{{ user_with_roles.user.first_name }}</td>
+                        <td>{{ user_with_roles.user.middle_name }}</td>
+                        <td>{{ user_with_roles.user.last_name }}</td>
+                        <td>{{ user_with_roles.user.email_address }}</td>
+                        <td>{{ user_with_roles.user.contact_number }}</td>
+                        <td class="{% if user_with_roles.user.status == 'Active' %}status-active{% else %}status-inactive{% endif %}">
+                            {{ user_with_roles.user.status }}
+                        </td>
+                        <td>
+                            {% if user_with_roles.roles %}
+                                {{ user_with_roles.roles|join:", " }}
+                            {% else %}
+                                No roles assigned
+                            {% endif %}
+                        </td>
+                        <td>
+                            <form action="{% url 'delete_user' user_with_roles.user.user_id %}" method="post" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn" title="Delete" style="background: none; border: none;">
+                                    <i class="fas fa-trash" style="color: red; font-size: 18px;"></i>
+                                </button>
+                            </form>
+                            <a href="{% url 'edit_user' user_with_roles.user.user_id %}" class="btn" title="Edit" style="background: none; border: none;">
+                                <i class="fas fa-edit" style="color: #fcb316; font-size: 18px;"></i>
+                            </a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="form-container">
+            <h2>Update User</h2>
+        
+            <form method="POST">
+                {% csrf_token %}
+                
+                <div class="form-row">
+                    <div>
+                        <label for="username">Username</label>
+                        <input type="text" id="username" name="username" value="{{ user.username }}" required>
+                    </div>
+                    <div>
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" placeholder="Enter current password to keep the same!" required>
+                    </div>
+                </div>
+            
+                <div class="form-row">
+                    <div>
+                        <label for="first_name">First Name</label>
+                        <input type="text" id="first_name" name="first_name" value="{{ user.first_name }}" required>
+                    </div>
+                    <div>
+                        <label for="middle_name">Middle Name</label>
+                        <input type="text" id="middle_name" name="middle_name" value="{{ user.middle_name }}">
+                    </div>
+                    <div>
+                        <label for="last_name">Last Name</label>
+                        <input type="text" id="last_name" name="last_name" value="{{ user.last_name }}" required>
+                    </div>
+                </div>
+            
+                <label for="email_address">Email Address</label>
+                <input type="email" id="email_address" name="email_address" value="{{ user.email_address }}" required>
+            
+                <label for="contact_number">Contact Number</label>
+                <input type="tel" id="contact_number" name="contact_number" value="{{ user.contact_number }}">
+            
+                <label for="status">Status</label>
+                <select id="status" name="status" required>
+                    <option value="Active" {% if user.status == 'Active' %}selected{% endif %}>Active</option>
+                    <option value="Inactive" {% if user.status == 'Inactive' %}selected{% endif %}>Inactive</option>
+                </select>
+        
+                <!-- Role Assignment Section -->
+                <label for="roles">Assign Roles</label>
+                <div>
+                    {% for role in roles %}
+                        <label>
+                            <input type="checkbox" name="roles" value="{{ role.role_id }}" {% if role.role_id in user_roles %}checked{% endif %}>
+                            {{ role.role_name }}
+                        </label><br>
+                    {% endfor %}
+                </div>
+            
+                <button type="submit">Update User</button>
+            </form>
+        </div>
+        
+              
+
+        <div class="popup-overlay" id="popup-overlay"></div>
+        <div class="popup" id="popup-form">
+            <h1>Create User</h1>
+            <form method="POST" action="{% url 'create_user' %}">
+                {% csrf_token %}
+
+                <div class="form-row">
+                    <div>
+                        <label for="username">Username <span class="required-indicator">*</span></label>
+                        <input type="text" id="username" name="username" required>
+                    </div>
+                    <div>
+                        <label for="password">Password <span class="required-indicator">*</span></label>
+                        <input type="password" id="password" name="password" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div>
+                        <label for="first_name">First Name <span class="required-indicator">*</span></label>
+                        <input type="text" id="first_name" name="first_name" required>
+                    </div>
+                    <div>
+                        <label for="middle_name">Middle Name</label>
+                        <input type="text" id="middle_name" name="middle_name">
+                    </div>
+                    <div>
+                        <label for="last_name">Last Name <span class="required-indicator">*</span></label>
+                        <input type="text" id="last_name" name="last_name" required>
+                    </div>
+                </div>
+
+                <label for="email_address">Email Address <span class="required-indicator">*</span></label>
+                <input type="email" id="email_address" name="email_address" required>
+
+                <label for="contact_number">Contact Number <span class="required-indicator">*</span></label>
+                <input type="tel" id="contact_number" name="contact_number">
+
+                <label for="status">Status <span class="required-indicator">*</span></label>
+                <select id="status" name="status" required>
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                </select>
+
+                <button type="submit">Create User</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="footer"></div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const searchInput = document.getElementById('search-input');
+            const userListBody = document.getElementById('user-list-body');
+            const searchButton = document.getElementById('search-button');
+            const createUserButton = document.getElementById('create-user-button');
+            const popupOverlay = document.getElementById('popup-overlay');
+            const popupForm = document.getElementById('popup-form');
+
+            searchButton.addEventListener('click', function() {
+                const searchQuery = searchInput.value.toLowerCase();
+                const rows = userListBody.getElementsByTagName('tr');
+                
+                Array.from(rows).forEach(function(row) {
+                    const username = row.cells[0].textContent.toLowerCase();
+                    const firstName = row.cells[1].textContent.toLowerCase();
+                    const lastName = row.cells[3].textContent.toLowerCase();
+                    
+                    if (username.includes(searchQuery) || firstName.includes(searchQuery) || lastName.includes(searchQuery)) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            });
+
+            createUserButton.addEventListener('click', function () {
+                popupOverlay.style.display = 'block';
+                popupForm.style.display = 'block';
+            });
+
+            popupOverlay.addEventListener('click', function () {
+                popupOverlay.style.display = 'none';
+                popupForm.style.display = 'none';
+            });
+
+            const updateRoleButton = document.querySelector('#confirmAddRoleBtn');
+            updateRoleButton.addEventListener('click', function () {
+                const selectedRole = document.getElementById('roleSelect').value;
+                fetch(`/add_role_to_user/{{ user.user_id }}/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({
+                        role: selectedRole
+                    })
+                }).then(response => response.json())
+                  .then(data => {
+                    $('#roleModal').modal('hide');
+                  });
+            });
+        });
+    </script>
+</body>
+
+</html>

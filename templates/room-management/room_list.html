@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Room List</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.24/css/jquery.dataTables.min.css">
+    <style>
+        /* Basic styles for the sidebar */
+        .sidebar {
+            height: 100%;
+            width: 256px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            background-color: #1A1851;
+            padding-top: 20px;
+            transform: translateX(0);
+            overflow: auto;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+            border-top-right-radius: 30px;
+            border-bottom-right-radius: 30px;
+            border-right: 3px solid #FCB316;
+            z-index: 1000; /* Ensure the sidebar is above other elements */
+            transition: transform 0.3s ease; /* Animation for sidebar movement */
+        }
+
+        .sidebar.closed {
+            transform: translateX(-250px); /* Move sidebar entirely off-screen */
+        }
+
+        .sidebar .user-info {
+            margin: 20px;
+        }
+
+        .sidebar .user-info h2 {
+            color: #fff;
+            text-align: center;
+        }
+
+        .sidebar .user-info h5 {
+            color: #fff;
+            text-align: center;
+        }
+
+        .sidebar nav a {
+            display: block;
+            padding-left: 10px;
+            padding-right: 5px;
+            padding-top: 5px;
+            padding-bottom: 5px;
+            color: #fff;
+            text-decoration: none;
+            background-color: #1A1851;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+            margin-right: 15px;
+            margin-left: 15px;
+        }
+
+        .sidebar nav a:hover {
+            background-color: #0d1233;
+            border-radius: 5px;
+        }
+
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+            transition: margin-left 0.3s ease;
+        }
+
+        .main-content.sidebar-closed {
+            margin-left: 0;
+        }
+
+        .sidebar-toggle {
+            position: fixed;
+            top: -5px;
+            left: -5px; /* Fixed position */
+            cursor: pointer;
+            background-color: #FCB316;
+            color: #fff;
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 1000; /* Ensure toggle button stays above the sidebar */
+        }
+
+        .logout-button {
+            display: block;
+            margin: 20px;
+            padding: 10px;
+            background-color: #FCB316;
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+
+        .menutext {
+            display: block;
+            padding-left: 10px;
+            padding-right: 5px;
+            padding-top: 5px;
+            padding-bottom: 5px;
+            color: #FCB316;
+            background-color: #1A1851;
+            margin-right: 15px;
+            margin-left: 15px;
+        }
+
+        .footer {
+            background-color: #FCB316;
+            color: white;
+            text-align: center;
+            align-items: center;
+            padding: 15px 0;
+            position: fixed;
+            bottom: 0;
+            height: 30px;
+            width: 100%;
+            z-index: 0; /* Ensure the footer stays behind the sidebar */
+        }
+
+        .room-list-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .room-list-table th, .room-list-table td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        .room-list-table th {
+            background-color: #1A1851;
+            color: #fff;
+        }
+
+        .search-form {
+            margin-bottom: 20px;
+            text-align: right;
+        }
+
+        .search-form input[type="text"] {
+            padding: 5px;
+            width: 200px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        .search-form button {
+            padding: 5px 10px;
+            background-color: #FCB316;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+        }
+
+        .search-form button:hover {
+            background-color: #e0a700;
+        }
+
+        .search-form {
+            margin-bottom: 20px;
+            text-align: right;
+        }
+        
+        .search-form input[type="text"] {
+            padding: 5px;
+            width: 200px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        
+        .search-form button {
+            padding: 5px 10px;
+            background-color: #FCB316;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+        }
+        
+        .search-form button:hover {
+            background-color: #e0a700;
+        }
+        
+        .room-list-table th, .room-list-table td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        
+        .room-list-table th {
+            background-color: #1A1851;
+            color: #fff;
+        }
+
+        img {
+            width: 80%;
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            height: auto;
+            margin-bottom: 40px;
+        }
+
+        h6 {
+            width: 80%;
+            color: #fff;
+            position: absolute;
+            text-align: center;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            height: auto;
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+    {% include 'sidebars/sidebar-scheduler.html' %}
+    <div class="sidebar-toggle" onclick="toggleSidebar()">☰</div>
+
+    <div class="main-content">
+        <h1>Room List</h1>
+        <div class="search-form">
+          <input type="text" id="search-input" placeholder="SEARCH FOR ROOM" value="{{ search_query }}">
+        </div>
+        <table class="room-list-table" id="room-list-table">
+            <thead>
+                <tr>
+                    <th>Building ID</th>
+                    <th>Room Name</th>
+                    <th>Room Type</th>
+                    <th>Room Capacity</th>
+                    <th>Modality</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="room-list-body">
+                {% for room in rooms %}
+                    <tr>
+                        <td>{{ room.building_id }}</td>
+                        <td>{{ room.room_name }}</td>
+                        <td>{{ room.roomType }}</td>
+                        <td>{{ room.capacity }}</td>
+                        <td>{{ room.modality }}</td>
+                        <td>
+                            <form action="{% url 'delete_room' room.room_id %}" method="post" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn" title="Delete" style="background: none; border: none;">
+                                    <i class="fas fa-trash" style="color: red; font-size: 18px;"></i>
+                                </button>
+                            </form>
+                            <a href="{% url 'edit_room' room.room_id %}" class="btn" title="Edit" style="background: none; border: none;">
+                                <i class="fas fa-edit" style="color: #fcb316; font-size: 18px;"></i>
+                            </a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const searchInput = document.getElementById('search-input');
+            const roomListBody = document.getElementById('room-list-body');
+
+            searchInput.addEventListener('input', function () {
+                const query = searchInput.value;
+
+                fetch(`/rooms/?search=${encodeURIComponent(query)}`, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data);  // Debugging line to check fetched data
+                    let html = '';
+                    data.rooms.forEach(room => {
+                        html += `
+                            <tr>
+                                <td>${room.room_name}</td>
+                                <td>${room.building_id}</td>
+                                <td>${room.roomType}</td>
+                                <td>${room.modality}</td>
+                                <td>
+                                    <form action="/delete-room/${room.room_id}/" method="post" style="display: inline;">
+                                        <input type="hidden" name="csrfmiddlewaretoken" value="${document.querySelector('[name=csrfmiddlewaretoken]').value}">
+                                        <button type="submit" class="btn" title="Delete" style="background: none; border: none;">
+                                            <i class="fas fa-trash" style="color: red; font-size: 18px;"></i>
+                                        </button>
+                                    </form>
+                                    <a href="/edit-room/${room.room_id}/" class="btn" title="Edit" style="background: none; border: none;">
+                                        <i class="fas fa-edit" style="color: #fcb316; font-size: 18px;"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    roomListBody.innerHTML = html;
+                })
+                .catch(error => console.error('Error:', error));
+            });
+        });
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const sidebar = document.querySelector('.sidebar');
+            const mainContent = document.querySelector('.main-content');
+
+            const isSidebarClosed = localStorage.getItem('sidebarClosed') === 'true';
+
+            if (isSidebarClosed) {
+                sidebar.classList.add('closed');
+                mainContent.classList.add('sidebar-closed');
+            }
+        });
+
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            const mainContent = document.querySelector('.main-content');
+
+            sidebar.classList.toggle('closed');
+            mainContent.classList.toggle('sidebar-closed');
+
+            const isClosed = sidebar.classList.contains('closed');
+            localStorage.setItem('sidebarClosed', isClosed);
+        }
+    </script>
+</body>
+</html>

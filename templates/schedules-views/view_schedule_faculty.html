@@ -1,0 +1,451 @@
+{% include 'sidebars/sidebar-faculty.html' %}
+{% load custom_filters %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam Schedules</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.24/css/jquery.dataTables.min.css">
+    <style>
+        .sidebar {
+            height: 100%;
+            width: 256px;
+            position: fixed;
+            top: -3px;
+            left: 0;
+            background-color: #1A1851;
+            padding-top: 20px;
+            transform: translateX(0);
+            overflow: auto;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+            border-top-right-radius: 30px;
+            border-top: 3px solid #FCB316;
+            border-right: 3px solid #FCB316;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar.closed {
+            transform: translateX(-250px);
+        }
+
+        .sidebar .user-info {
+            margin: 20px;
+        }
+
+        .sidebar .user-info h2 {
+            color: #fff;
+            text-align: center;
+        }
+
+        .sidebar .user-info h5 {
+            color: #fff;
+            text-align: center;
+        }
+
+        .sidebar nav a {
+            display: block;
+            padding-left: 10px;
+            padding-right: 5px;
+            padding-top: 5px;
+            padding-bottom: 5px;
+            color: #fff;
+            text-decoration: none;
+            background-color: #1A1851;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+            margin-right: 15px;
+            margin-left: 15px;
+        }
+
+        .sidebar nav a:hover {
+            background-color: #0d1233;
+            border-radius: 5px;
+        }
+
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+            transition: margin-left 0.3s ease;
+        }
+
+        .main-content.sidebar-closed {
+            margin-left: 0;
+        }
+
+        .sidebar-toggle {
+            position: fixed;
+            top: -5px;
+            left: -5px;
+            cursor: pointer;
+            background-color: #FCB316;
+            color: #fff;
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 1000;
+        }
+
+        .logout-button {
+            display: block;
+            margin: 20px;
+            padding: 10px;
+            background-color: #FCB316;
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+
+        .menutext {
+            display: block;
+            padding-left: 10px;
+            padding-right: 5px;
+            padding-top: 5px;
+            padding-bottom: 5px;
+            color: #FCB316;
+            background-color: #1A1851;
+            margin-right: 15px;
+            margin-left: 15px;
+        }
+
+        .footer {
+            background-color: #FCB316;
+            color: white;
+            text-align: center;
+            align-items: center;
+            padding: 15px 0;
+            position: fixed;
+            bottom: 0;
+            height: 30px;
+            width: 100%;
+            z-index: 0;
+        }
+
+        img {
+            width: 80%;
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            height: auto;
+            margin-bottom: 40px;
+        }
+        
+        h6 {
+            width: 80%;
+            color: #fff;
+            position: absolute;
+            text-align: center;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            height: auto;
+            margin-bottom: 30px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            border: 1px solid black;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .details {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 10px;
+        }
+
+        .details div {
+            margin: 5px 0;
+        }
+
+        .time-slot {
+            width: 200px;
+            text-align: center;
+            text-wrap: nowrap;
+        }
+
+        .room-column {
+            position: relative;
+            flex-grow: 1;
+        }
+
+        .schedule-container {
+            position: relative;
+            height: 48px;
+            width: 100%;
+            display: flex;
+            gap: 20px;
+        }
+        
+        .schedule-item30 {
+            width: 200px;
+            height: 50px;
+            color: rgb(0, 0, 0);
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            z-index: 10;
+            top: var(--schedule-top, 0);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            font-size: 10px;
+        }
+
+        .schedule-item60 {
+            width: 200px;
+            height: 120px;
+            color: rgb(0, 0, 0);
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            z-index: 10;
+            top: var(--schedule-top, 0);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .schedule-item90 {
+            width: 200px;
+            height: 195px;
+            color: rgb(0, 0, 0);
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            z-index: 10;
+            top: var(--schedule-top, 0);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .schedule-item120 {
+            width: 200px;
+            height: 266px;
+            color: rgb(0, 0, 0);
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            z-index: 10;
+            top: var(--schedule-top, 0);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .schedule-item150 {
+            width: 200px;
+            height: 338px;
+            color: rgb(0, 0, 0);
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            z-index: 10;
+            top: var(--schedule-top, 0);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .schedule-item180 {
+            width: 200px;
+            height: 410px;
+            color: rgb(0, 0, 0);
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            z-index: 10;
+            top: var(--schedule-top, 0);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .delete-button-container {
+            display: inline-flex;
+            align-items: center;
+            margin-left: 20px;
+        }
+
+        .delete-button {
+            background-color: #FCB316;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            margin-top: 25px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .delete-button:hover {
+            background-color: #d81d1d;
+        }
+
+        .bg-red {
+            background-color: #b95959;
+        }
+
+        .bg-blue {
+            background-color: #4f84c9;
+        }
+
+        .bg-yellow {
+            background-color: #b7b750;
+        }
+
+        .bg-green {
+            background-color: #57b357;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="main-content">
+        <h2 class="mt-4">Exam Schedules</h2>
+
+        {% if messages %}
+            <div class="alert alert-info">
+                {% for message in messages %}
+                    <p>{{ message }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% for day in sorted_days %}
+            <div style="display: flex; align-items: center; margin-bottom: 20px;">
+                <div>
+                    <h3>{{ day }}</h3>
+                </div>
+            </div>
+            <div class="search-bar">
+                <input type="text" id="searchInput" class="form-control" placeholder="Search schedules...">
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            {% for building, rooms in building_data.items %}
+                                <th colspan="{{ rooms|length }}" class="text-center">{{ building }}</th>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <th></th>
+                            {% for building, rooms in building_data.items %}
+                                {% for room in rooms %}
+                                    <th class="text-center">{{ room.room_name }}</th>
+                                {% endfor %}
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for hour, minute in time_slots %}
+                            <tr>
+                                <td class="time-slot">{{ hour|format_time:minute }} - {{ hour|add_time:minute }}</td>
+                                {% for building, rooms in building_data.items %}
+                                    {% for room, schedules in rooms.items %}
+                                        <td class="room-column">
+                                            <div class="schedule-container">
+                                                {% for schedule in schedules %}
+                                                    {% if schedule.start_time.hour == hour and schedule.start_time.minute == minute and schedule.day == day %}
+                                                        <div class="schedule-item{{ schedule.duration }} 
+                                                            {% if schedule.sectionYearSem.yearSem.yearSem_id == 1 or schedule.sectionYearSem.yearSem.yearSem_id == 2 %}
+                                                                bg-red
+                                                            {% elif schedule.sectionYearSem.yearSem.yearSem_id == 3 or schedule.sectionYearSem.yearSem.yearSem_id == 4 %}
+                                                                bg-blue
+                                                            {% elif schedule.sectionYearSem.yearSem.yearSem_id == 5 or schedule.sectionYearSem.yearSem.yearSem_id == 6 %}
+                                                                bg-yellow
+                                                            {% elif schedule.sectionYearSem.yearSem.yearSem_id == 7 or schedule.sectionYearSem.yearSem.yearSem_id == 8 %}
+                                                                bg-green
+                                                            {% endif %}
+                                                        " data-schedule="{{ schedule.courseProgram.course.course_code }} {{ schedule.sectionYearSem.section.section_name }} {{ schedule.proctor.first_name }} {{ schedule.status }}">
+                                                            <div><strong>Course Code:</strong> {{ schedule.courseProgram.course.course_code }}</div>
+                                                            <div><strong>Section:</strong> {{ schedule.sectionYearSem.section.section_name }}</div>
+                                                            <div><strong>Proctor:</strong> {{ schedule.proctor.first_name }}</div>
+                                                            <div><strong>Status:</strong> {{ schedule.status }}</div>
+                                                        </div>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            </div>
+                                        </td>
+                                    {% endfor %}
+                                {% endfor %}
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endfor %}
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const sidebar = document.querySelector('.sidebar');
+            const mainContent = document.querySelector('.main-content');
+
+            const isSidebarClosed = localStorage.getItem('sidebarClosed') === 'true';
+
+            if (isSidebarClosed) {
+                sidebar.classList.add('closed');
+                mainContent.classList.add('sidebar-closed');
+            }
+        });
+
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            const mainContent = document.querySelector('.main-content');
+
+            sidebar.classList.toggle('closed');
+            mainContent.classList.toggle('sidebar-closed');
+
+            const isClosed = sidebar.classList.contains('closed');
+            localStorage.setItem('sidebarClosed', isClosed);
+        }
+    </script>
+    <script>
+        document.getElementById("searchInput").addEventListener("input", function() {
+            var filter = this.value.toLowerCase();
+            var scheduleItems = document.querySelectorAll(".schedule-item30, .schedule-item60, .schedule-item90, .schedule-item120, .schedule-item150, .schedule-item180");
+
+            scheduleItems.forEach(function(item) {
+                if (item.getAttribute("data-schedule").toLowerCase().includes(filter)) {
+                    item.style.display = "flex";
+                } else {
+                    item.style.display = "none";
+                }
+            });
+        });
+    </script>
+    <script>
+        document.getElementById("searchInput").addEventListener("input", function() {
+            var filter = this.value.toLowerCase();
+            var scheduleItems = document.querySelectorAll(".schedule-item30, .schedule-item60, .schedule-item90, .schedule-item120, .schedule-item150, .schedule-item180");
+
+            scheduleItems.forEach(function(item) {
+                if (item.getAttribute("data-schedule").toLowerCase().includes(filter)) {
+                    item.style.display = "flex";
+                } else {
+                    item.style.display = "none";
+                }
+            });
+        });
+    </script>
+</body>
+</html>

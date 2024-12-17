@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Exam Plotting</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.24/css/jquery.dataTables.min.css">
+    <style>
+        .sidebar {
+            height: 100%;
+            width: 256px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            background-color: #1A1851;
+            padding-top: 20px;
+            transform: translateX(0);
+            overflow: auto;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+            border-top-right-radius: 30px;
+            border-right: 3px solid #FCB316;
+            z-index: 1000; 
+            transition: transform 0.3s ease; 
+        }
+
+        .sidebar.closed {
+            transform: translateX(-250px);
+        }
+
+        .sidebar .user-info {
+            margin: 20px;
+        }
+
+        .sidebar .user-info h2 {
+            color: #fff;
+            text-align: center;
+        }
+
+        .sidebar .user-info h5 {
+            color: #fff;
+            text-align: center;
+        }
+
+        .sidebar nav a {
+            display: block;
+            padding-left: 10px;
+            padding-right: 5px;
+            padding-top: 5px;
+            padding-bottom: 5px;
+            color: #fff;
+            text-decoration: none;
+            background-color: #1A1851;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+            margin-right: 15px;
+            margin-left: 15px;
+        }
+
+        .sidebar nav a:hover {
+            background-color: #0d1233;
+            border-radius: 5px;
+        }
+
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+            transition: margin-left 0.3s ease;
+            flex-wrap: wrap;
+        }
+
+        .main-content.sidebar-closed {
+            margin-left: 0;
+        }
+
+        .sidebar-toggle {
+            position: fixed;
+            top: -5px;
+            left: -5px;
+            cursor: pointer;
+            background-color: #FCB316;
+            color: #fff;
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 1000;
+        }
+
+        .logout-button {
+            display: block;
+            margin: 20px;
+            padding: 10px;
+            background-color: #FCB316;
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+
+        .menutext {
+            display: block;
+            padding-left: 10px;
+            padding-right: 5px;
+            padding-top: 5px;
+            padding-bottom: 5px;
+            color: #FCB316;
+            background-color: #1A1851;
+            margin-right: 15px;
+            margin-left: 15px;
+        }
+
+        .footer {
+            background-color: #FCB316;
+            color: white;
+            text-align: center;
+            align-items: center;
+            padding: 15px 0;
+            position: fixed;
+            bottom: 0;
+            height: 30px;
+            width: 100%;
+            z-index: 0;
+        }
+
+        .room-list-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .room-list-table th, .room-list-table td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        .room-list-table th {
+            background-color: #1A1851;
+            color: #fff;
+        }
+
+        .search-form {
+            margin-bottom: 20px;
+            text-align: right;
+        }
+
+        .search-form input[type="text"] {
+            padding: 5px;
+            width: 200px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        .search-form button {
+            padding: 5px 10px;
+            background-color: #FCB316;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+        }
+
+        .search-form button:hover {
+            background-color: #e0a700;
+        }
+
+        .search-form {
+            margin-bottom: 20px;
+            text-align: right;
+        }
+        
+        .search-form input[type="text"] {
+            padding: 5px;
+            width: 200px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        
+        .search-form button {
+            padding: 5px 10px;
+            background-color: #FCB316;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+        }
+        
+        .search-form button:hover {
+            background-color: #e0a700;
+        }
+        
+        .room-list-table th, .room-list-table td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        
+        .room-list-table th {
+            background-color: #1A1851;
+            color: #fff;
+        }
+
+        img {
+            width: 80%;
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            height: auto;
+            margin-bottom: 40px;
+        }
+
+        h6 {
+            width: 80%;
+            color: #fff;
+            position: absolute;
+            text-align: center;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            height: auto;
+            margin-bottom: 30px;
+        }
+
+        .checkbox-container {
+            margin-bottom: 20px;
+        }
+
+        .checkbox-container label {
+            margin-right: 15px;
+            font-weight: bold;
+        }
+
+        #courseCheckboxes {
+            margin-top: 20px;
+        }
+
+        /* Form styles */
+        #generateScheduleForm {
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .scrollable-checkboxes {
+            max-height: 215px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            padding: 5px;
+            margin-top: 10px;
+        }
+
+        .scrollable-checkboxes input[type="checkbox"] {
+            margin-right: 10px;
+            margin-bottom: 5px;
+        }
+
+        .scrollable-checkboxes label {
+            display: block;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #FCB316;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #e0a700;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            padding: 8px;
+            width: calc(100% - 20px);
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        .search-form {
+            text-align: right;
+        }
+
+        .search-form input[type="text"] {
+            width: 250px;
+            margin-bottom: 20px;
+        }
+
+        .search-form button {
+            background-color: #FCB316;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    {% include 'sidebars/sidebar-scheduler.html' %}
+    <div class="sidebar-toggle" onclick="toggleSidebar()">☰</div>
+
+    <div class="main-content">
+
+        <form method="POST" id="generateScheduleForm">
+            {% csrf_token %}
+            <h1>Generate Schedule</h1>
+
+            <div class="checkbox-container">
+                <label>
+                    <input type="checkbox" id="selectFirstSemester" /> First Semester
+                </label>
+                <label>
+                    <input type="checkbox" id="selectSecondSemester" /> Second Semester
+                </label>
+            </div>
+            
+            <div class="form-group" id="courseCheckboxes">
+            </div>
+            
+            <div class="form-group" id="hiddenCourses" style="display:none;">
+            </div>
+
+            <div class="form-group">
+                <label style="font-weight: bold;" for="id_exam_semester">Exam Semester</label>
+                {{ form.exam_semester }}
+            </div>
+
+            <div class="form-group">
+                <label style="font-weight: bold;" for="id_exam_term">Exam Term</label>
+                {{ form.exam_term }}
+            </div>
+
+            <div class="form-group">
+                <label for="id_exam_duration">Exam Duration (minutes)</label>
+                {{ form.exam_duration }}
+            </div>
+
+            <div class="form-group">
+                <div>
+                <label style="font-weight: bold;" for="id_courses">Select Additional Courses</label>
+                <div class="search-form">
+                    <input style="display: flex;" type="text" id="searchCourses" placeholder="Search courses..." />
+                </div>
+                </div>
+                <div class="scrollable-checkboxes" id="coursesList">
+                    {{ form.courses }}
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label style="font-weight: bold;" for="id_rooms">Select Rooms</label>
+                <div class="search-form">
+                    <input style="display: flex;" type="text" id="searchRooms" placeholder="Search rooms..." />
+                </div>
+                <div class="scrollable-checkboxes" id="roomsList">
+                    {{ form.rooms }}
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label style="font-weight: bold;" for="id_start_time">Start Time</label>
+                {{ form.start_time }}
+            </div>
+
+            <div class="form-group">
+                <label style="font-weight: bold;" for="id_end_time">End Time</label>
+                {{ form.end_time }}
+            </div>
+
+            <div class="form-group">
+                <label style="font-weight: bold;" for="id_exam_days">Available Exam Days</label>
+                <div class="search-form">
+                    <input  style="display: flex;" type="text" id="searchExamDays" placeholder="Search exam days..." />
+                </div>
+                <div class="scrollable-checkboxes" id="examDaysList">
+                    {{ form.exam_days }}
+                </div>
+            </div>
+            <button type="submit">Generate Schedule</button>
+        </form>
+    </div>
+    <script>
+        document.getElementById('selectFirstSemester').addEventListener('change', function () {
+            updateCoursesBySemester(this.checked, 'first');
+        });
+
+        document.getElementById('selectSecondSemester').addEventListener('change', function () {
+            updateCoursesBySemester(this.checked, 'second');
+        });
+
+        function updateCoursesBySemester(isChecked, semester) {
+            const courseDiv = document.getElementById('courseCheckboxes');
+            const hiddenCoursesDiv = document.getElementById('hiddenCourses');
+            
+            if (isChecked) {
+                courseDiv.style.display = 'block';
+                hiddenCoursesDiv.style.display = 'none';
+
+                fetch('/fetch-courses/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({ semester: semester })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    courseDiv.innerHTML = '';
+
+                    const table = document.createElement('table');
+                    table.classList.add('table');
+
+                    const thead = document.createElement('thead');
+                    const headerRow = document.createElement('tr');
+                    const header1 = document.createElement('th');
+                    header1.textContent = 'Course Code';
+                    const header2 = document.createElement('th');
+                    header2.textContent = 'Course Name';
+                    const header3 = document.createElement('th');
+                    header3.textContent = 'Select';
+
+                    headerRow.appendChild(header3);
+                    headerRow.appendChild(header1);
+                    headerRow.appendChild(header2);
+                    thead.appendChild(headerRow);
+                    table.appendChild(thead);
+
+                    const tbody = document.createElement('tbody');
+                    data.courses.forEach(course => {
+                        const row = document.createElement('tr');
+                        const codeCell = document.createElement('td');
+                        codeCell.textContent = course.course_code;
+                        const nameCell = document.createElement('td');
+                        nameCell.textContent = course.course_name;
+                        const selectCell = document.createElement('td');
+                        const checkbox = document.createElement('input');
+                        checkbox.type = 'checkbox';
+                        checkbox.name = 'courses';
+                        checkbox.value = course.id;
+                        
+                        if (isChecked) {
+                            checkbox.checked = true;
+                        }
+                        
+                        selectCell.appendChild(checkbox);
+                        row.appendChild(selectCell);
+                        row.appendChild(codeCell);
+                        row.appendChild(nameCell);
+                        tbody.appendChild(row);
+                    });
+
+                    table.appendChild(tbody);
+                    courseDiv.appendChild(table);
+                });
+            } else {
+                courseDiv.style.display = 'none';
+                hiddenCoursesDiv.style.display = 'block';
+            }
+        }
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const searchCourses = document.getElementById('searchCourses');
+            const searchRooms = document.getElementById('searchRooms');
+            const searchExamDays = document.getElementById('searchExamDays');
+            
+            const coursesList = document.getElementById('coursesList');
+            const roomsList = document.getElementById('roomsList');
+            const examDaysList = document.getElementById('examDaysList');
+
+            searchCourses.addEventListener('input', function() {
+                filterList(coursesList, searchCourses.value);
+            });
+
+            searchRooms.addEventListener('input', function() {
+                filterList(roomsList, searchRooms.value);
+            });
+
+            searchExamDays.addEventListener('input', function() {
+                filterList(examDaysList, searchExamDays.value);
+            });
+
+            function filterList(listContainer, searchValue) {
+                const items = listContainer.getElementsByTagName('label');
+                for (let i = 0; i < items.length; i++) {
+                    const label = items[i];
+                    const itemText = label.textContent || label.innerText;
+                    if (itemText.toLowerCase().includes(searchValue.toLowerCase())) {
+                        label.style.display = "";
+                    } else {
+                        label.style.display = "none";
+                    }
+                }
+            }
+        });
+
+    </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const sidebar = document.querySelector('.sidebar');
+            const mainContent = document.querySelector('.main-content');
+
+            const isSidebarClosed = localStorage.getItem('sidebarClosed') === 'true';
+
+            if (isSidebarClosed) {
+                sidebar.classList.add('closed');
+                mainContent.classList.add('sidebar-closed');
+            }
+        });
+
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            const mainContent = document.querySelector('.main-content');
+
+            sidebar.classList.toggle('closed');
+            mainContent.classList.toggle('sidebar-closed');
+
+            const isClosed = sidebar.classList.contains('closed');
+            localStorage.setItem('sidebarClosed', isClosed);
+        }
+    </script>
+</body>
+</html>

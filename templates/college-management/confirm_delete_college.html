@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Confirm Delete College</title>
+    <link rel="stylesheet" href="{% static 'your_css_file.css' %}">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.24/css/jquery.dataTables.min.css">
+</head>
+<body>
+    {% include 'sidebars/sidebar-scheduler.html' %}
+
+    <div class="main-content">
+        <h2>Confirm Deletion</h2>
+        <p>Are you sure you want to delete the college: <strong>{{ college.college_name }}</strong>?</p>
+        <form method="POST">
+            {% csrf_token %}
+            <button type="submit">Yes, delete</button>
+            <a href="{% url 'college_list' %}">Cancel</a>
+        </form>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const sidebar = document.querySelector('.sidebar');
+            const mainContent = document.querySelector('.main-content');
+
+            const isSidebarClosed = localStorage.getItem('sidebarClosed') === 'true';
+
+            if (isSidebarClosed) {
+                sidebar.classList.add('closed');
+                mainContent.classList.add('sidebar-closed');
+            }
+        });
+
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            const mainContent = document.querySelector('.main-content');
+
+            sidebar.classList.toggle('closed');
+            mainContent.classList.toggle('sidebar-closed');
+
+            const isClosed = sidebar.classList.contains('closed');
+            localStorage.setItem('sidebarClosed', isClosed);
+        }
+    </script>
+</body>
+</html>

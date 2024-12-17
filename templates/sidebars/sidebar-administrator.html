@@ -1,0 +1,49 @@
+{% load static %}
+{% load role_tags %}
+<div class="sidebar">
+    
+    <div class="menutext">
+        <h4></h4>
+    </div>
+    <div class="user-info">
+        <h2>{{ request.user.first_name }} {{ request.user.middle_name }} {{ request.user.last_name }}</h2>
+        <div style="display: flex; justify-content: center; color:#FCB316">
+            <h4>Your Roles</h4>
+        </div>
+        <div style="display: flex; justify-content: center; gap: 7px;">
+            {% if request.user|has_role:"Faculty" %}
+            <a href="{% url 'dashboard_faculty' %}" style="color: white; text-decoration: none; background-color: #1A1851; border-radius: 5px; transition: background-color 0.3s ease;">Faculty</a>
+            {% endif %}
+            
+            {% if request.user|has_role:"Dean" %}
+            <a href="{% url 'dashboard_dean' %}" style="color: white; text-decoration: none; background-color: #1A1851; border-radius: 5px; transition: background-color 0.3s ease;">Dean</a>
+            {% endif %}
+            
+            {% if request.user|has_role:"Administrator" %}
+            <a href="{% url 'dashboard_administrator' %}" style="color: white; text-decoration: none; background-color: #1A1851; border-radius: 5px; transition: background-color 0.3s ease;">Admin</a>
+            {% endif %}
+            
+            {% if request.user|has_role:"Scheduler" %}
+            <a href="{% url 'dashboard_scheduler' %}" style="color: white; text-decoration: none; background-color: #1A1851; border-radius: 5px; transition: background-color 0.3s ease;">Scheduler</a>
+            {% endif %}
+
+        </div>
+        <div style="display: flex; justify-content: center; gap: 7px;">
+            {% if request.user|has_role:"Bayanihan Leader" %}
+                <a href="{% url 'dashboard_faculty' %}" style="color: white;    text-decoration: none; background-color: #1A1851; border-radius: 5px;  transition: background-color 0.3s ease;">Bayanihan Leader</a>
+            {% endif %}
+        </div>
+    </div>
+    <div class="menutext">
+        <h4>Menu</h4>
+    </div>
+    <nav>
+        <a href="{% url 'dashboard_administrator' %}" class="menu-link">Dashboard</a>
+        <a href="{% url 'manage_users' %}" class="menu-link">User Management</a>
+        
+    </nav>
+    <a href="{% url 'logout' %}" class="logout-button">Logout</a>
+    <h6>&copy; 2024 ExamSync USTP</h6>
+</div>
+
+<span class="sidebar-toggle" onclick="toggleSidebar()">☰</span>

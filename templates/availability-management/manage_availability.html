@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Availability</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.24/css/jquery.dataTables.min.css">
+    <style>
+        .sidebar {
+            height: 100%;
+            width: 256px;
+            position: fixed;
+            top: -3px;
+            left: 0;
+            background-color: #1A1851;
+            padding-top: 20px;
+            transform: translateX(0);
+            overflow: auto;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+            border-top-right-radius: 30px;
+            border-top: 3px solid #FCB316;
+            border-right: 3px solid #FCB316;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar.closed {
+            transform: translateX(-250px);
+        }
+
+        .sidebar .user-info {
+            margin: 20px;
+        }
+
+        .sidebar .user-info h2 {
+            color: #fff;
+            text-align: center;
+        }
+
+        .sidebar .user-info h5 {
+            color: #fff;
+            text-align: center;
+        }
+
+        .sidebar nav a {
+            display: block;
+            padding-left: 10px;
+            padding-right: 5px;
+            padding-top: 5px;
+            padding-bottom: 5px;
+            color: #fff;
+            text-decoration: none;
+            background-color: #1A1851;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+            margin-right: 15px;
+            margin-left: 15px;
+        }
+
+        .sidebar nav a:hover {
+            background-color: #0d1233;
+            border-radius: 5px;
+        }
+
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+            transition: margin-left 0.3s ease;
+        }
+
+        .main-content.sidebar-closed {
+            margin-left: 0;
+        }
+
+        .sidebar-toggle {
+            position: fixed;
+            top: -5px;
+            left: -5px;
+            cursor: pointer;
+            background-color: #FCB316;
+            color: #fff;
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 1000;
+        }
+
+        .logout-button {
+            display: block;
+            margin: 20px;
+            padding: 10px;
+            background-color: #FCB316;
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+
+        .menutext {
+            display: block;
+            padding-left: 10px;
+            padding-right: 5px;
+            padding-top: 5px;
+            padding-bottom: 5px;
+            color: #FCB316;
+            background-color: #1A1851;
+            margin-right: 15px;
+            margin-left: 15px;
+        }
+
+        .footer {
+            background-color: #FCB316;
+            color: white;
+            text-align: center;
+            align-items: center;
+            padding: 15px 0;
+            position: fixed;
+            bottom: 0;
+            height: 30px;
+            width: 100%;
+            z-index: 0;
+        }
+
+        img {
+            width: 80%;
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            height: auto;
+            margin-bottom: 40px;
+        }
+
+        h6 {
+            width: 80%;
+            color: #fff;
+            position: absolute;
+            text-align: center;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            height: auto;
+            margin-bottom: 30px;
+        }
+
+        /* Styling for checkboxes */
+        input[type="checkbox"] {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            width: 25px;
+            height: 25px;
+            background-color: #FCB316;  /* Yellow for unchecked */
+            border: 2px solid #1A1851;  /* Dark border */
+            border-radius: 5px;
+            position: relative;
+            margin-right: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        /* Checked state */
+        input[type="checkbox"]:checked {
+            background-color: #0d1233;  /* Dark background for checked */
+            border-color: #FCB316;      /* Yellow border */
+        }
+
+        /* Hover effect for both checked and unchecked states */
+        input[type="checkbox"]:hover {
+            background-color: #1A1851;  /* Dark background color on hover */
+            border-color: #FCB316;      /* Yellow border on hover */
+        }
+
+        input[type="checkbox"]:checked:hover {
+            background-color: #1A1851;  /* Dark background for checked when hovered */
+            border-color: #FCB316;      /* Yellow border on hover */
+        }
+
+        label {
+            color: #1A1851;
+            font-size: 14px;
+            margin-left: 10px;
+            display: inline-block;
+        }
+
+        /* Style for availability times (for better readability) */
+        .availability-item {
+            color: #1A1851;
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+
+        /* Flexbox layout for each day */
+        .day-container {
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #1A1851;  /* Optional border for separation */
+        }
+
+        .day-container strong {
+            display: block;
+            font-size: 18px;
+            color: #1A1851; /* Highlight day name in yellow */
+        }
+
+        .checkbox-group {
+            display: flex;
+            gap: 15px;
+        }
+
+        .checkbox-group label {
+            font-size: 16px;
+            white-space: nowrap;
+        }
+
+
+        button[type="submit"] {
+            background-color: #FCB316;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+            width: 100%;
+            max-width: 130px;
+            margin-top: 20px;
+            display: block;
+            text-align: center;
+            margin-left: auto;
+            margin-right: 0;    
+        }
+
+        button[type="submit"]:hover {
+            background-color: #0d1233;
+            transform: scale(1.05);
+        }
+
+
+
+
+    </style>
+</head>
+<body>
+    
+    {% include 'sidebars/sidebar-faculty.html' %}
+
+    <div class="main-content">
+        <form method="POST">
+            {% csrf_token %}
+            <h1>Set Availability</h1>
+        
+            {% for day, availabilities in availability_by_day.items %}
+                <div class="day-container">
+                    <strong>{{ day }}:</strong>
+        
+                    <div class="checkbox-group">
+                        {% for availability in availabilities %}
+                            <div class="availability-item">
+                                <input type="checkbox" name="checkbox" value="{{ availability.availability_id }}"
+                                    {% if availability.availability_id in user_availability_ids %} checked {% endif %}>
+                                <label>{{ availability.availabilityDescription }} {{ availability.availabilityTime }}</label>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endfor %}
+        
+            <button type="submit">Save</button>
+        </form>
+    </div>
+
+    <div class="footer">
+        
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const sidebar = document.querySelector('.sidebar');
+            const mainContent = document.querySelector('.main-content');
+
+            const isSidebarClosed = localStorage.getItem('sidebarClosed') === 'true';
+
+            if (isSidebarClosed) {
+                sidebar.classList.add('closed');
+                mainContent.classList.add('sidebar-closed');
+            }
+        });
+
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            const mainContent = document.querySelector('.main-content');
+
+            sidebar.classList.toggle('closed');
+            mainContent.classList.toggle('sidebar-closed');
+
+            const isClosed = sidebar.classList.contains('closed');
+            localStorage.setItem('sidebarClosed', isClosed);
+        }
+    </script>
+</body>
+</html>
