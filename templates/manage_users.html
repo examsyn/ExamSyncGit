@@ -3,7 +3,7 @@
 <head>
     <title>User Management</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <style>
         .sidebar {
             height: 100%;
@@ -406,6 +406,7 @@
                     <th>Last Name</th>
                     <th>Email Address</th>
                     <th>Contact Number</th>
+                    <th>Work Time</th>
                     <th>Status</th>
                     <th>Roles</th>
                     <th>Actions</th>
@@ -420,6 +421,9 @@
                         <td>{{ user_with_roles.user.last_name }}</td>
                         <td>{{ user_with_roles.user.email_address }}</td>
                         <td>{{ user_with_roles.user.contact_number }}</td>
+                        <td class="{% if user_with_roles.user.work_time == 'Full-Time' %}status-fulltime{% else %}status-parttime{% endif %}">
+                            {{ user_with_roles.user.work_time }}
+                        </td>
                         <td class="{% if user_with_roles.user.status == 'Active' %}status-active{% else %}status-inactive{% endif %}">
                             {{ user_with_roles.user.status }}
                         </td>
@@ -483,14 +487,19 @@
             
                 <label for="contact_number">Contact Number</label>
                 <input type="tel" id="contact_number" name="contact_number" value="{{ user.contact_number }}">
+
+                <label for="work_time">Work Time</label>
+                <select id="work_time" name="work_time" required>
+                    <option value="Full-Time" {% if user.status == 'Full-Time' %}selected{% endif %}>Full-Time</option>
+                    <option value="Part-Time" {% if user.status == 'Part-Time' %}selected{% endif %}>Part-Time</option>
+                </select>
             
                 <label for="status">Status</label>
                 <select id="status" name="status" required>
                     <option value="Active" {% if user.status == 'Active' %}selected{% endif %}>Active</option>
                     <option value="Inactive" {% if user.status == 'Inactive' %}selected{% endif %}>Inactive</option>
                 </select>
-        
-                <!-- Role Assignment Section -->
+ 
                 <label for="roles">Assign Roles</label>
                 <div>
                     {% for role in roles %}
@@ -543,6 +552,12 @@
 
                 <label for="contact_number">Contact Number <span class="required-indicator">*</span></label>
                 <input type="tel" id="contact_number" name="contact_number">
+
+                <label for="work_time">Work-Time <span class="required-indicator">*</span></label>
+                <select id="work_time" name="work_time" required>
+                    <option value="Full-Time">Full-Time</option>
+                    <option value="Part-Time">Part-Time</option>
+                </select>
 
                 <label for="status">Status <span class="required-indicator">*</span></label>
                 <select id="status" name="status" required>

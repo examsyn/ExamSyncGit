@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Scheduler Login</title>
+    <title>Login</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/1.10.24/css/jquery.dataTables.min.css">
@@ -109,7 +109,7 @@
             <div class="icon-container">
                 <i class="fa-solid fa-cog"></i>
             </div>
-            <h2>Scheduler Login</h2>
+            <h2>{{ role|title }} Login</h2>
 
             {% if error %}
                 <p class="error-message">{{ error }}</p>
@@ -126,7 +126,6 @@
                     <input type="password" id="password" name="password" required>
                 </div>
                 <button type="submit" class="login-button">Login</button>
-                <a href="{% url 'select_login_page' %}" class="back-button">Return</a>
             </form>
         </div>
     </div>

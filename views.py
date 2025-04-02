@@ -27,9 +27,6 @@ from collections import defaultdict
 def unauthorized_access(request):
     return render(request, 'unauthorized_access.html')
 
-def custom_404_view(request, exception=None):
-    return redirect('select_login_page')
-
 @login_required
 @role_required('administrator')
 def manage_users(request):
@@ -64,6 +61,7 @@ def manage_users(request):
                     'last_name': user['user'].last_name,
                     'email_address': user['user'].email_address,
                     'contact_number': user['user'].contact_number,
+                    'work_time': user['user'].work_time,
                     'status': user['user'].status,
                     'roles': user['roles'],
                     'user_id': user['user'].user_id
@@ -102,8 +100,25 @@ def create_user(request):
     if request.method == 'POST':
         form = UserForm(request.POST)
         if form.is_valid():
-            form.save()
+            user = form.save(commit=False)
+
+            if user.work_time == "Full-Time":
+                user.save()
+
+                full_time_availability_ids = [1,2,3, 4,5,6, 7,8,9, 10,11,12, 13,14,15, 16,17,18]
+
+                full_time_availability = Availability.objects.filter(availability_id__in=full_time_availability_ids)
+
+                for availability in full_time_availability:
+                    UserAvailability.objects.create(user=user, availability=availability)
+
+                assigned_ids = [a.availability_id for a in full_time_availability]
+                print("Assigned Availability IDs for Full-Time User:", assigned_ids)
+
+            user.save()
+
             return redirect('manage_users')
+
         else:
             error_message = "There was an error creating this user. Make sure the user does not exist!"
             print(form.errors)
@@ -119,6 +134,7 @@ def create_user(request):
     })
 
 
+
 @login_required
 @role_required('administrator')
 def edit_user(request, user_id):
@@ -126,13 +142,13 @@ def edit_user(request, user_id):
 
     if request.method == 'POST':
         form = UserForm(request.POST, instance=user)
-        
+
         if form.is_valid():
             cleaned_data = form.cleaned_data
 
             new_password = cleaned_data.get('password')
             if new_password:
-                user.password = make_password(new_password)
+                user.set_password(new_password)
 
             user.username = cleaned_data.get('username', user.username)
             user.first_name = cleaned_data.get('first_name', user.first_name)
@@ -140,9 +156,24 @@ def edit_user(request, user_id):
             user.last_name = cleaned_data.get('last_name', user.last_name)
             user.email_address = cleaned_data.get('email_address', user.email_address)
             user.contact_number = cleaned_data.get('contact_number', user.contact_number)
+            
+            new_work_time = cleaned_data.get('work_time', user.work_time)
             user.status = cleaned_data.get('status', user.status)
 
             user.save()
+
+            if new_work_time == "Full-Time":
+                UserAvailability.objects.filter(user=user).delete()
+
+                full_time_availability_ids = [1,2,3, 4,5,6, 7,8,9, 10,11,12, 13,14,15, 16,17,18]
+
+                full_time_availability = Availability.objects.filter(availability_id__in=full_time_availability_ids)
+
+                for availability in full_time_availability:
+                    UserAvailability.objects.create(user=user, availability=availability)
+
+                assigned_ids = [a.availability_id for a in full_time_availability]
+                print("Assigned Availability IDs for Full-Time User:", assigned_ids)
 
             roles_selected = request.POST.getlist('roles')
             UserRole.objects.filter(user=user).delete()
@@ -166,6 +197,7 @@ def edit_user(request, user_id):
         'roles': roles, 
         'user_roles': user_roles
     })
+
 
 @login_required
 @role_required('administrator')
@@ -204,35 +236,39 @@ def add_role_to_user(request, user_id):
     roles = Role.objects.all()
     return render(request, 'manage_users.html', {'user': user, 'roles': roles})
 
-
-
-@guest_required
-def select_login_page(request):
-    return render(request, 'login-pages/all-login-pages.html')
-
+def custom_404_view(request, exception=None):
+    return redirect('login_page')
 
 @guest_required
-def login_view(request, role):
+def login_view(request, role=None):
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
         user = authenticate(request, username=username, password=password)
+
         if user is not None:
             if user.status != 'Active':
                 error_message = 'Your account is not active. Please contact support.'
-                return render(request, f'login-pages/login-{role}.html', {'error': error_message})
-            
-            user_roles = UserRole.objects.filter(user=user).values_list('role__role_name', flat=True)
-            if role in [r.lower() for r in user_roles]:
-                login(request, user)
-                return redirect(f'/dashboard-{role}/')
-            else:
-                error_message = f"This user does not have the '{role.capitalize()}' role!"
-                return render(request, f'login-pages/login-{role}.html', {'error': error_message})
-        else:
-            return render(request, f'login-pages/login-{role}.html', {'error': 'Invalid credentials'})
-    return render(request, f'login-pages/login-{role}.html')
+                return render(request, 'login-pages/login.html', {'role': role, 'error': error_message})
 
+            user_roles = UserRole.objects.filter(user=user).values_list('role__role_name', flat=True)
+            user_roles_lower = [r.lower() for r in user_roles]
+
+            if user_roles_lower:
+                if role.lower() in user_roles_lower:
+                    login(request, user)
+                    return redirect(f'/dashboard-{role}/')
+                else:
+                    first_role = user_roles_lower[0]
+                    login(request, user)
+                    return redirect(f'/dashboard-{first_role}/')
+            else:
+                error_message = 'You do not have any roles assigned. Please contact support.'
+                return render(request, 'login-pages/login.html', {'role': role, 'error': error_message})
+        else:
+            return render(request, 'login-pages/login.html', {'role': role, 'error': 'Invalid credentials'})
+
+    return render(request, 'login-pages/login.html')
 
 # DASHBOARDS
 @login_required
@@ -259,7 +295,7 @@ def dashboard_view(request, role):
 
 def logout_view(request):
     logout(request)
-    return redirect('select_login_page')
+    return redirect('login_page')
 
 
 register = template.Library()
@@ -378,17 +414,24 @@ def delete_course(request, course_id):
 
 
 # MANAGE BUILDINGS
-@login_required
-@role_required('scheduler')
-def manage_buildings(request):
-    return render(request, 'building-management/manage_buildings.html')
 
 
 @login_required
 @role_required('scheduler')
 def building_list(request):
     search_query = request.GET.get('search', '')
-    
+
+    if request.method == 'POST':  
+        form = BuildingForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Building created successfully!")
+            return redirect('building_list')
+        else:
+            messages.error(request, "Please correct the errors below.")
+    else:
+        form = BuildingForm()
+
     if search_query:
         buildings = Building.objects.filter(
             Q(building_name__icontains=search_query) |
@@ -396,33 +439,12 @@ def building_list(request):
         )
     else:
         buildings = Building.objects.all()
-    
-    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-        return JsonResponse({
-            'buildings': [
-                {
-                    'building_code': building.building_code,
-                    'building_name': building.building_name,
-                    'building_id': building.building_id
-                }
-                for building in buildings
-            ]
-        })
-    
-    return render(request, 'building-management/building_list.html', {'buildings': buildings, 'search_query': search_query})
 
-
-@login_required
-@role_required('scheduler')
-def create_building(request):
-    if request.method == 'POST':
-        form = BuildingForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('building_list')
-    else:
-        form = BuildingForm()
-    return render(request, 'building-management/create_building.html', {'form': form})
+    return render(request, 'building-management/building_list.html', {
+        'buildings': buildings,
+        'form': form,
+        'search_query': search_query
+    })
 
 
 @login_required
@@ -453,51 +475,33 @@ def delete_building(request, building_id):
 # MANAGE ROOMS
 @login_required
 @role_required('scheduler')
-def manage_rooms(request):
-    rooms = Room.objects.all()
-    return render(request, 'room-management/manage_rooms.html', {'rooms': rooms})
+def room_list(request):
+    search_query = request.GET.get('search', '')
 
-@login_required
-@role_required('scheduler')
-def create_room(request):
     if request.method == 'POST':
         form = RoomForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('manage_rooms')
+            messages.success(request, "Room created successfully!")
+            return redirect('room_list')
+        else:
+            messages.error(request, "Please correct the errors below.")
     else:
         form = RoomForm()
-    return render(request, 'room-management/create_room.html', {'form': form})
 
-@login_required
-@role_required('scheduler')
-def room_list(request):
-    search_query = request.GET.get('search', '')
-    
-    if search_query:
+    if search_query:  # Handle search
         rooms = Room.objects.filter(
             Q(room_name__icontains=search_query) |
             Q(room_id__icontains=search_query)
         )
     else:
         rooms = Room.objects.all()
-    
-    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-        return JsonResponse({
-            'rooms': [
-                {
-                    'room_id': room.room_id,
-                    'room_name': room.room_name,
-                    'building_id': room.building_id,
-                    'capacity': room.capacity,
-                    'roomType':room.roomType,
-                    'modality':room.modality,
-                }
-                for room in rooms
-            ]
-        })
-    
-    return render(request, 'room-management/room_list.html', {'rooms': rooms, 'search_query': search_query})
+
+    return render(request, 'room-management/room_list.html', {
+        'rooms': rooms,
+        'form': form,
+        'search_query': search_query
+    })
 
 
 @login_required
@@ -533,27 +537,9 @@ def delete_room(request, room_id):
 # MANAGE PROGRAMS
 @login_required
 @role_required('scheduler')
-def manage_programs(request):
-    programs = Program.objects.all()
-    return render(request, 'program-management/manage_programs.html', {'programs': programs})
-
-@login_required
-@role_required('scheduler')
-def create_program(request):
-    if request.method == 'POST':
-        form = ProgramForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('manage_programs')
-    else:
-        form = ProgramForm()
-    return render(request, 'program-management/create_program.html', {'form': form})
-
-@login_required
-@role_required('scheduler')
 def program_list(request):
     search_query = request.GET.get('search', '')
-    
+
     if search_query:
         programs = Program.objects.filter(
             Q(program_name__icontains=search_query) |
@@ -561,20 +547,22 @@ def program_list(request):
         )
     else:
         programs = Program.objects.all()
-    
-    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-        return JsonResponse({
-            'programs': [
-                {
-                    'program_id': program.program_id,
-                    'program_name': program.program_name,
-                    'college_id': program.college_id,
-                }
-                for program in programs
-            ]
-        })
-    
-    return render(request, 'program-management/program_list.html', {'programs': programs, 'search_query': search_query})
+
+    if request.method == 'POST':
+        form = ProgramForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('program_list')
+
+    else:
+        form = ProgramForm()
+
+    return render(request, 'program-management/program_list.html', {
+        'programs': programs,
+        'search_query': search_query,
+        'form': form
+    })
+
 
 @login_required
 @role_required('scheduler')
@@ -610,47 +598,30 @@ def delete_program(request, program_id):
 # MANAGE COLLEGES
 @login_required
 @role_required('scheduler')
-def manage_colleges(request):
-    colleges = College.objects.all()
-    return render(request, 'college-management/manage_colleges.html', {'colleges': colleges})
-
-@login_required
-@role_required('scheduler')
-def create_college(request):
-    if request.method == 'POST':
-        form = CollegeForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('manage_colleges')  # Adjust the URL name accordingly
-    else:
-        form = CollegeForm()
-    return render(request, 'college-management/create_college.html', {'form': form})
-
-@login_required
-@role_required('scheduler')
 def college_list(request):
     search_query = request.GET.get('search', '')
-    
+
     if search_query:
         colleges = College.objects.filter(
-            Q(college_name__icontains=search_query) |
-            Q(college_code__icontains=search_query)
+            Q(college_name__icontains=search_query)
         )
     else:
         colleges = College.objects.all()
-    
-    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-        return JsonResponse({
-            'colleges': [
-                {
-                    'college_id': college.college_id,
-                    'college_name': college.college_name,
-                }
-                for college in colleges
-            ]
-        })
-    
-    return render(request, 'college-management/college_list.html', {'colleges': colleges, 'search_query': search_query})
+
+    if request.method == 'POST':
+        form = CollegeForm(request.POST)
+        if form.is_valid():
+            college = form.save()
+            return redirect('college_list')
+
+    else:
+        form = CollegeForm()
+
+    return render(request, 'college-management/college_list.html', {
+        'colleges': colleges,
+        'search_query': search_query,
+        'form': form
+    })
 
 
 @login_required
@@ -1418,20 +1389,19 @@ def fitness_function(schedule, courses_by_yearsem_program, exam_duration):
         else:
             used_rooms[(day, start_time, room_id)] = True
 
-        if proctor_id in used_proctors:
-            for assigned_day, assigned_time in used_proctors[proctor_id]:
-                if assigned_day == day and assigned_time == start_time:
-                    score -= 50
-        used_proctors[proctor_id].add((day, start_time))
+        if (day, start_time) in used_proctors[proctor_id]:
+            score -= 50
+        else:
+            used_proctors[proctor_id].add((day, start_time))
 
         course = courses_by_yearsem_program[course_id]
         program_id = course.courseProgram.program.program_id
         yearSem_id = course.yearSem.yearSem_id
 
-        if (program_id, yearSem_id) in program_timeslot_usage and (day, start_time) in program_timeslot_usage[(program_id, yearSem_id)]:
+        if (day, start_time) in program_timeslot_usage[(program_id, yearSem_id)]:
             score -= 200
-
-        program_timeslot_usage[(program_id, yearSem_id)].add((day, start_time))
+        else:
+            program_timeslot_usage[(program_id, yearSem_id)].add((day, start_time))
 
         program_day_count[(program_id, yearSem_id, day)] += 1
         if program_day_count[(program_id, yearSem_id, day)] > 3:
@@ -1447,6 +1417,7 @@ def fitness_function(schedule, courses_by_yearsem_program, exam_duration):
             seen_timeslots.add(exam)
 
     return score
+
 
 
 def selection(population, fitness_scores):
@@ -1729,12 +1700,30 @@ def generate_schedule(request):
                 room = Room.objects.get(room_id=room_id)
                 proctor = User.objects.get(user_id=proctor_id)
 
-                available_rooms = [room for room in rooms if (room.room_id, exam_day, start_time) not in room_availability[room.room_id]]
-                
+                valid_sections = SectionYearSem.objects.filter(
+                    programSection__program=course.courseProgram.program,
+                    yearSem=course.yearSem
+                )
+
+                if not valid_sections.exists():
+                    messages.error(
+                        request, 
+                        f"No valid sections found for course {course.course.course_code} in program {course.courseProgram.program.program_name}."
+                    )
+                    continue
+
+                available_rooms = [
+                    room for room in rooms 
+                    if (room.room_id, exam_day, start_time) not in room_availability[room.room_id]
+                ]
+
                 if available_rooms:
                     assigned_room = random.choice(available_rooms)
                 else:
                     assigned_room = room
+
+
+                assigned_section = valid_sections.first()
 
                 exam_schedule = ExamSchedule(
                     examSemester=form.cleaned_data['exam_semester'],
@@ -1744,7 +1733,7 @@ def generate_schedule(request):
                     end_time=(datetime.combine(exam_day, start_time) + timedelta(minutes=exam_duration)).time(),
                     exam_duration=exam_duration,
                     proctor=proctor,
-                    sectionYearSem=SectionYearSem.objects.first(),
+                    sectionYearSem=assigned_section,
                     courseYearSem=course,
                     courseProgram=course.courseProgram,
                     room=assigned_room,
@@ -1781,7 +1770,6 @@ def add_remark(request, examSchedule_id):
     return render(request, 'exam-remarks/add_remark.html', {'schedule': schedule})
 
 
-
 @login_required
 @role_required('dean')
 def update_remark_status(request, examRemarks_id):
@@ -1804,6 +1792,8 @@ def update_remark_status(request, examRemarks_id):
         messages.success(request, f'Remark status updated to {status}.')
         
         exam_schedule = ExamSchedule.objects.get(examSchedule_id=exam_remark.examSchedule_id)
+        
+        original_proctor = User.objects.get(user_id=exam_schedule.proctor_id)
         
         if status == "Approved":
             availability_mapping = {
@@ -1843,8 +1833,9 @@ def update_remark_status(request, examRemarks_id):
                     exam_schedule.proctor = new_proctor
                     exam_schedule.save()
 
+                    # Notify the new proctor
                     if new_proctor.email_address:
-                        subject = f"You have been re assigned to an exam as a Proctor"
+                        subject = f"You have been re-assigned to an exam as a Proctor"
                         message = f"Dear {new_proctor.first_name},\n\nYou have been assigned as the proctor for the exam scheduled on {exam_schedule.day}, {exam_schedule.room}, {exam_schedule.start_time}.\n\nThank you."
                         from_email = settings.DEFAULT_FROM_EMAIL
                         
@@ -1855,12 +1846,23 @@ def update_remark_status(request, examRemarks_id):
                             [new_proctor.email_address],
                             fail_silently=False,
                         )
+
+                    schedulers = User.objects.filter(user_roles__role__role_name='Scheduler')
+                    scheduler_emails = [scheduler.email_address for scheduler in schedulers if scheduler.email_address]
+
+                    if scheduler_emails:
+                        subject = "Proctor Replacement Notification"
+                        message = f"A proctor has been replaced:\n\nOld proctor: {original_proctor.first_name} {original_proctor.last_name}\nNew proctor: {new_proctor.first_name} {new_proctor.last_name}\nExam Date: {exam_schedule.day}, Room: {exam_schedule.room}, Time: {exam_schedule.start_time}.\n\nThank you."
+                        send_mail(
+                            subject,
+                            message,
+                            from_email,
+                            scheduler_emails,
+                            fail_silently=False,
+                        )
                 else:
                     messages.error(request, "No available proctors found for this exam.")
                     return redirect('dashboard_dean')
-
-        original_proctor = User.objects.get(user_id=exam_schedule.proctor_id)
-
 
         if original_proctor.email_address:
             subject = f"Your exam remark has been {status}"

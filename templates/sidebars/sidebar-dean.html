@@ -1,13 +1,15 @@
 {% load static %}
 {% load role_tags %}
 <div class="sidebar">
+    
     <div class="menutext">
         <h4></h4>
     </div>
     <div class="user-info">
         <h2>{{ request.user.first_name }} {{ request.user.middle_name }} {{ request.user.last_name }}</h2>
-        <div style="display: flex; justify-content: center; color:#FCB316">
-            <h4>Your Roles</h4>
+        <h5 style="color: white; justify-content: center; display: flex;">{{ request.user.work_time }}</h5>
+        <div style="display: flex; justify-content: center; color:#FCB316; margin-top: 30px;">
+            <h4>Dashboards</h4>
         </div>
         <div style="display: flex; justify-content: center; gap: 7px;">
             {% if request.user|has_role:"Faculty" %}
@@ -37,8 +39,42 @@
         <h4>Menu</h4>
     </div>
     <nav>
-        <a href="{% url 'dashboard_dean' %}" class="menu-link">Dashboard</a>
-        <a href="{% url 'view_schedules_dean' %}" class="menu-link">Exam Schedules</a>
+        {% if request.user|has_role:"Administrator" %}
+        <a href="{% url 'manage_users' %}" class="menu-link">User Management</a>
+        {% endif %}
+    </nav>
+    <nav>
+        {% if request.user|has_role:"Scheduler" %}
+        <a href="{% url 'generate_schedule' %}" class="menu-link">Exam Schedule Plotting</a>
+        <a href="{% url 'view_schedules_scheduler' %}" class="menu-link">Approved Schedules</a>
+        <a href="{% url 'exam_schedules' %}" class="menu-link">Pending Schedules</a>
+        <a href="{% url 'view_schedules_dean' %}" class="menu-link">Exam Schedule Approval</a>
+        {% endif %}
+    </nav>
+    <nav>
+        {% if request.user|has_role:"Scheduler" %}        
+        <a href="{% url 'building_list' %}" class="menu-link">Building Management</a>
+        <a href="{% url 'room_list' %}" class="menu-link">Room Management</a>
+        <a href="{% url 'college_list' %}" class="menu-link">College Management</a>
+        <a href="{% url 'program_list' %}" class="menu-link">Program Management</a>
+        <a href="{% url 'manage_courses' %}" class="menu-link">Course Management</a>
+        <a href="{% url 'manage_sections' %}" class="menu-link">Section Management</a>
+        <a href="{% url 'assign_course_modality' %}" class="menu-link">Course Assignment</a>
+        {% endif %}
+    </nav>
+    <nav>
+        {% if request.user|has_role:"Dean" %}
+        <a href="{% url 'view_schedules_dean' %}" class="menu-link">Exam Schedules Dean</a>
+        {% endif %}
+        {% if request.user|has_role:"Faculty" %}
+        <a href="{% url 'view_schedules_faculty' %}" class="menu-link">Exam Schedules Faculty</a>
+        {% endif %}
+        {% if request.user|has_role:"Faculty" %}
+        <a href="{% url 'manage_availability' %}">Availability</a>
+        {% endif %}
+        {% if request.user|has_role:"Bayanihan Leader" %}
+        <a href="{% url 'edit-course-modality' %}">Course Modality</a>
+        {% endif %}
     </nav>
     <a href="{% url 'logout' %}" class="logout-button">Logout</a>
     <h6>&copy; 2024 ExamSync USTP</h6>

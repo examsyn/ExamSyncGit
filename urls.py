@@ -7,11 +7,8 @@ urlpatterns = [
     path('edit-user/<int:user_id>/', views.edit_user, name='edit_user'),
     path('delete-user/<int:user_id>/', views.delete_user, name='delete_user'),
 
-    path('', views.select_login_page, name='select_login_page'),
-    path('login/administrator/', views.login_view, {'role': 'administrator'}, name='login_administrator'),
-    path('login/scheduler/', views.login_view, {'role': 'scheduler'}, name='login_scheduler'),
-    path('login/dean/', views.login_view, {'role': 'dean'}, name='login_dean'),
-    path('login/faculty/', views.login_view, {'role': 'faculty'}, name='login_faculty'),
+    path('', views.login_view, {'role': 'administrator'}, name='login_page'),
+    path('login/<str:role>/', views.login_view, name='login_with_role'),
 
     path('logout/', views.logout_view, name='logout'),
 
@@ -26,27 +23,19 @@ urlpatterns = [
     path('edit-course/<int:course_id>/', views.edit_course, name='edit_course'),
     path('delete-course/<int:course_id>/', views.delete_course, name='delete_course'),
     
-    path('manage-buildings/', views.manage_buildings, name='manage_buildings'),
     path('buildings/', views.building_list, name='building_list'),
-    path('create-building/', views.create_building, name='create_building'),
     path('edit-building/<int:building_id>/', views.edit_building, name='edit_building'),
     path('delete-building/<int:building_id>/', views.delete_building, name='delete_building'),
 
-    path('manage-rooms/', views.manage_rooms, name='manage_rooms'),
     path('rooms/', views.room_list, name='room_list'),
-    path('create-room/', views.create_room, name='create_room'),
     path('edit-room/<int:room_id>/', views.edit_room, name='edit_room'),
     path('delete-room/<int:room_id>/', views.delete_room, name='delete_room'),
 
-    path('manage-programs/', views.manage_programs, name='manage_programs'),
     path('programs/', views.program_list, name='program_list'),
-    path('create-program/', views.create_program, name='create_program'),
     path('edit-program/<int:program_id>/', views.edit_program, name='edit_program'),
     path('delete-program/<int:program_id>/', views.delete_program, name='delete_program'),
 
-    path('manage-colleges/', views.manage_colleges, name='manage_colleges'),
     path('colleges/', views.college_list, name='college_list'),
-    path('create-college/', views.create_college, name='create_college'),
     path('edit-college/<int:college_id>/', views.edit_college, name='edit_college'),
     path('delete-college/<int:college_id>/', views.delete_college, name='delete_college'),
 

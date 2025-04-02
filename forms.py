@@ -12,7 +12,7 @@ class UserForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ['username', 'first_name', 'middle_name', 'last_name', 'email_address', 'contact_number', 'status', 'password']
+        fields = ['username', 'first_name', 'middle_name', 'last_name', 'email_address', 'contact_number', 'work_time' ,'status', 'password']
         widgets = {
             'password': forms.PasswordInput(attrs={'placeholder': 'Enter current password to keep the same!'}),
         }
@@ -34,7 +34,7 @@ class UserUpdateForm(forms.ModelForm):
     
     class Meta:
         model = User
-        fields = ['username', 'first_name', 'middle_name', 'last_name', 'email_address', 'contact_number', 'status']
+        fields = ['username', 'first_name', 'middle_name', 'last_name', 'email_address', 'contact_number', 'work_time', 'status']
 
     def clean_password(self):
         return self.initial["password"]
@@ -191,7 +191,7 @@ class ExamScheduleForm(forms.Form):
     start_time = forms.TimeField(widget=forms.TimeInput(attrs={'type': 'time'}), required=False, label="Start Time")
     end_time = forms.TimeField(widget=forms.TimeInput(attrs={'type': 'time'}), required=False, label="End Time")
     exam_days = forms.MultipleChoiceField(
-        choices=[],  # Dynamically populated
+        choices=[],
         widget=forms.CheckboxSelectMultiple,
         label="Available Exam Days"
     )
@@ -208,10 +208,9 @@ class ExamScheduleForm(forms.Form):
             random_proctor = random.choice(self.faculty_users)
             self.fields['proctor'].initial = random_proctor.user_id
 
-        # Dynamically populate exam_days choices for the next 60 days from today
         self.fields['exam_days'].choices = [
             (day.strftime("%Y-%m-%d"), day.strftime("%Y-%m-%d")) for day in [
-                timezone.now().date() + timedelta(days=i) for i in range(1, 30)
+                timezone.now().date() + timedelta(days=i) for i in range(1, 2000)
             ]
         ]
 
@@ -231,7 +230,6 @@ class ExamScheduleForm(forms.Form):
         if not exam_days:
             raise forms.ValidationError("At least one available exam day must be selected.")
 
-        # Convert the list of selected days from strings to `datetime.date` objects
         available_days = []
         for day in exam_days:
             try:
@@ -239,7 +237,6 @@ class ExamScheduleForm(forms.Form):
             except ValueError:
                 raise forms.ValidationError(f"Invalid date format for exam day: {day}")
 
-        # Randomly pick a day from the converted list
         cleaned_data['exam_day'] = random.choice(available_days)
 
         if not start_time and not end_time:
@@ -259,15 +256,14 @@ class ExamScheduleForm(forms.Form):
         if not courses:
             raise forms.ValidationError("No courses were selected. Please select at least one course.")
 
-        exam_day = cleaned_data.get('exam_day')  # Already converted to datetime.date
+        exam_day = cleaned_data.get('exam_day')
         exam_duration = cleaned_data.get('exam_duration')
         rooms = cleaned_data.get('rooms')
 
-        # Define start and end time bounds for the exam day
-        day_start = timezone.datetime.combine(exam_day, time(7, 0))  # 7:00 AM
-        day_end = timezone.datetime.combine(exam_day, time(21, 0))   # 9:00 PM
+        day_start = timezone.datetime.combine(exam_day, time(7, 0))
+        day_end = timezone.datetime.combine(exam_day, time(21, 0))
 
-        total_available_time = (day_end - day_start).total_seconds() / 60  # Total minutes
+        total_available_time = (day_end - day_start).total_seconds() / 60
         if exam_duration > total_available_time:
             raise forms.ValidationError("The exam duration is too long to fit within the available time window.")
 
@@ -279,16 +275,13 @@ class ExamScheduleForm(forms.Form):
 
         available_slots = []
         attempt_count = 0
-        max_attempts = 50  # Limit the number of retries to avoid an infinite loop
-
+        max_attempts = 50
         while available_slots == [] and attempt_count < max_attempts:
             attempt_count += 1
-            # Generate a fresh list of available slots by checking conflicts.
             for start in possible_start_times:
                 end = start + timedelta(minutes=exam_duration)
                 conflict_found = False
 
-                # Check for conflicts with other exams for the same courseProgram and courseYearSem
                 for course in courses:
                     course_program = course.courseProgram
                     course_year_sem = course.yearSem
@@ -298,25 +291,22 @@ class ExamScheduleForm(forms.Form):
                         start_time__lt=end.time(),
                         end_time__gt=start.time(),
                         courseProgram=course_program,
-                        courseYearSem__yearSem=course_year_sem,  # Same program and year-semester
+                        courseYearSem__yearSem=course_year_sem,
                         status="Scheduled"
                     ).exists():
                         conflict_found = True
                         break
 
                 if not conflict_found:
-                    # Skip room availability check if no slot was found yet (retry logic)
                     available_slots.append((start, end))
 
             if available_slots == []:
-                # After failing to find a slot, retry but ignore room conflicts
                 available_slots = []
                 for start in possible_start_times:
                     end = start + timedelta(minutes=exam_duration)
                     available_slots.append((start, end))
 
         if available_slots:
-            # Pick the first valid slot from available slots
             chosen_slot = random.choice(available_slots)
             cleaned_data['start_time'] = chosen_slot[0].time()
             cleaned_data['end_time'] = chosen_slot[1].time()
@@ -361,10 +351,9 @@ from django.utils import timezone
 import random
 
 class ExamScheduleUpdateForm(forms.ModelForm):
-    # Only the fields that can be updated: room, start_time, end_time, day, proctor
     room = forms.ModelChoiceField(
         queryset=Room.objects.all(),
-        widget=forms.Select(),  # Dropdown for room selection
+        widget=forms.Select(),
         label="Select Room"
     )
     start_time = forms.TimeField(widget=forms.TimeInput(attrs={'type': 'time'}), required=True, label="Start Time")
@@ -373,7 +362,7 @@ class ExamScheduleUpdateForm(forms.ModelForm):
 
     class Meta:
         model = ExamSchedule
-        fields = ['room', 'start_time', 'end_time', 'exam_day']  # Only the fields to update
+        fields = ['room', 'start_time', 'end_time', 'exam_day'] 
 
     def clean(self):
         cleaned_data = super().clean()
@@ -381,24 +370,21 @@ class ExamScheduleUpdateForm(forms.ModelForm):
         end_time = cleaned_data.get('end_time')
         exam_day = cleaned_data.get('exam_day')
 
-        # Ensure that the end time is after the start time
         if end_time <= start_time:
             raise forms.ValidationError("End time must be after start time.")
 
         room = cleaned_data.get('room')
 
-        # Get the current exam schedule instance (if it's an update)
         current_exam_schedule_id = self.instance.examSchedule_id
 
-        # Check for conflicts with other exams (same room, same time) for the same courseProgram and courseYearSem
         if ExamSchedule.objects.filter(
             day=exam_day,
             start_time__lt=end_time,
             end_time__gt=start_time,
             room=room,
             status="Scheduled",
-            courseProgram=self.instance.courseProgram,  # Same courseProgram
-            courseYearSem=self.instance.courseYearSem,  # Same courseYearSem
+            courseProgram=self.instance.courseProgram,
+            courseYearSem=self.instance.courseYearSem,
         ).exclude(examSchedule_id=current_exam_schedule_id).exists():
             raise forms.ValidationError("Another exam with the same courseProgram and courseYearSem is already scheduled in this time slot.")
 
@@ -407,7 +393,6 @@ class ExamScheduleUpdateForm(forms.ModelForm):
     def save(self, commit=True):
         exam_schedule = super().save(commit=False)
 
-        # Save the selected room to the schedule
         selected_room = self.cleaned_data['room']
         exam_schedule.room = selected_room
 

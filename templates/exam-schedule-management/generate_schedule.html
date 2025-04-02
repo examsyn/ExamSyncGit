@@ -232,7 +232,23 @@
             margin-top: 20px;
         }
 
-        /* Form styles */
+        .step { display: none; }
+        .step.active { display: block; }
+        .step-indicator { text-align: center; margin-bottom: 20px; }
+        .step-indicator span { 
+            display: inline-block; 
+            width: 25px; 
+            height: 25px; 
+            line-height: 25px; 
+            background-color: #ccc; 
+            color: #fff; 
+            border-radius: 50%; 
+            text-align: center; 
+            margin-right: 10px; 
+        }
+        .step-indicator span.active { background-color: #FCB316; }
+        button { margin: 10px 5px; }
+
         #generateScheduleForm {
             margin: 0 auto;
             padding: 20px;
@@ -297,6 +313,15 @@
             background-color: #FCB316;
             border-radius: 5px;
         }
+        .required-indicator {
+            color: red;
+            font-weight: bold;
+            margin-left: 5px;
+        }
+        .checkbox-error {
+            background-color: #ffcccc;
+            border: 1px solid red;
+        }
     </style>
 </head>
 <body>
@@ -305,179 +330,253 @@
     <div class="sidebar-toggle" onclick="toggleSidebar()">☰</div>
 
     <div class="main-content">
+        <div class="step-indicator">
+            <span id="indicator-1" class="active">1</span>
+            <span id="indicator-2">2</span>
+            <span id="indicator-3">3</span>
 
+        </div>
+        
         <form method="POST" id="generateScheduleForm">
             {% csrf_token %}
-            <h1>Generate Schedule</h1>
-
-            <div class="checkbox-container">
-                <label>
-                    <input type="checkbox" id="selectFirstSemester" /> First Semester
-                </label>
-                <label>
-                    <input type="checkbox" id="selectSecondSemester" /> Second Semester
-                </label>
+            
+            <div class="step active" id="step-1">
+                <h1>Exam Semester and Courses</h1>
+                <label>Select Semester: <span class="required-indicator">*Required</span></label>
+                <p style="color: green;">Select the semester you want to create a schedule.</p>
+                <div class="checkbox-container">
+                    <label>
+                        <input type="radio" id="selectFirstSemester" name="semester" /> First Semester
+                    </label>
+                    <label>
+                        <input type="radio" id="selectSecondSemester" name="semester" /> Second Semester
+                    </label>
+                </div>                
+                <div class="form-group" id="courseCheckboxes">
+                </div>
+                <div class="form-group">
+                    <div>
+                    <label for="id_courses">Select Additional Courses: *Optional</label>
+                    <p style="color: green;">Select a special course you want to create a schedule.</p>
+                    <div class="search-form">
+                        <input style="display: flex;" type="text" id="searchCourses" placeholder="Search courses..." />
+                    </div>
+                    </div>
+                    <div class="scrollable-checkboxes" id="coursesList">
+                        {{ form.courses }}
+                    </div>
+                </div>
+    
+                <div class="form-group" id="hiddenCourses" style="display:none;">
+                </div>
+                <button type="button" id="next-1" class="btn btn-primary">Next</button>
             </div>
             
-            <div class="form-group" id="courseCheckboxes">
+            <div class="step" id="step-2">
+                <h1>Assign Rooms</h1>
+                <div class="form-group" id="courseCheckboxes"></div>
+                <div class="form-group" id="roomsList">
+                    <label>Select Rooms: <span class="required-indicator">*required</span></label>
+                    <p style="color: green;">Check the boxes of rooms you available.</p>
+                    <input type="text" id="searchRooms" placeholder="Search rooms..." />
+                    <div class="scrollable-checkboxes">
+                        {{ form.rooms }}
+                    </div>
+                </div>
+                <button type="button" id="prev-2" class="btn btn-secondary">Previous</button>
+                <button type="button" id="next-2" class="btn btn-primary">Next</button>
             </div>
             
-            <div class="form-group" id="hiddenCourses" style="display:none;">
-            </div>
-
-            <div class="form-group">
-                <label style="font-weight: bold;" for="id_exam_semester">Exam Semester</label>
-                {{ form.exam_semester }}
-            </div>
-
-            <div class="form-group">
-                <label style="font-weight: bold;" for="id_exam_term">Exam Term</label>
-                {{ form.exam_term }}
-            </div>
-
-            <div class="form-group">
-                <label for="id_exam_duration">Exam Duration (minutes)</label>
-                {{ form.exam_duration }}
-            </div>
-
-            <div class="form-group">
-                <div>
-                <label style="font-weight: bold;" for="id_courses">Select Additional Courses</label>
-                <div class="search-form">
-                    <input style="display: flex;" type="text" id="searchCourses" placeholder="Search courses..." />
+            <div class="step" id="step-3">
+                <h1>Schedule Date and Time</h1>
+                <div class="form-group">
+                    <label>Exam Semester: *Automatic</label>
+                    <p style="color: green;">Semester.</p>
+                    {{ form.exam_semester }}
                 </div>
+                <div class="form-group">
+                    <label>Exam Term: <span class="required-indicator">*required</span></label>
+                    <p style="color: green;">Select the term.</p>
+                    {{ form.exam_term }}
                 </div>
-                <div class="scrollable-checkboxes" id="coursesList">
-                    {{ form.courses }}
+                <div class="form-group">
+                    <label>Exam Minute Duration: <span class="required-indicator">*required</span></label>
+                    <p style="color: green;">Input the exam duration in minutes, (e.g. 30minutes, 60minutes, 90minutes, etc.)</p>
+                    {{ form.exam_duration }}
                 </div>
+                <div class="form-group">
+                    <label>Available Exam Days: <span class="required-indicator">*required</span></label>
+                    <p style="color: green;">Select the days available to schedule.</p>
+                    <input type="text" id="searchExamDays" placeholder="Search exam days..." />
+                    <div class="scrollable-checkboxes" id="examDaysList">
+                        {{ form.exam_days }}
+                    </div>
+                </div>
+                <button type="button" id="prev-3" class="btn btn-secondary">Previous</button>
+                <button type="submit" class="btn btn-success">Generate Schedule</button>
             </div>
-
-            <div class="form-group">
-                <label style="font-weight: bold;" for="id_rooms">Select Rooms</label>
-                <div class="search-form">
-                    <input style="display: flex;" type="text" id="searchRooms" placeholder="Search rooms..." />
-                </div>
-                <div class="scrollable-checkboxes" id="roomsList">
-                    {{ form.rooms }}
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label style="font-weight: bold;" for="id_start_time">Start Time</label>
-                {{ form.start_time }}
-            </div>
-
-            <div class="form-group">
-                <label style="font-weight: bold;" for="id_end_time">End Time</label>
-                {{ form.end_time }}
-            </div>
-
-            <div class="form-group">
-                <label style="font-weight: bold;" for="id_exam_days">Available Exam Days</label>
-                <div class="search-form">
-                    <input  style="display: flex;" type="text" id="searchExamDays" placeholder="Search exam days..." />
-                </div>
-                <div class="scrollable-checkboxes" id="examDaysList">
-                    {{ form.exam_days }}
-                </div>
-            </div>
-            <button type="submit">Generate Schedule</button>
         </form>
     </div>
     <script>
-        document.getElementById('selectFirstSemester').addEventListener('change', function () {
-            updateCoursesBySemester(this.checked, 'first');
-        });
+        document.addEventListener("DOMContentLoaded", function () {
+            const steps = document.querySelectorAll(".step");
+            const indicators = document.querySelectorAll(".step-indicator span");
+            let currentStep = 0;
 
-        document.getElementById('selectSecondSemester').addEventListener('change', function () {
-            updateCoursesBySemester(this.checked, 'second');
-        });
+            const courseDiv = document.getElementById("courseCheckboxes");
 
-        function updateCoursesBySemester(isChecked, semester) {
-            const courseDiv = document.getElementById('courseCheckboxes');
-            const hiddenCoursesDiv = document.getElementById('hiddenCourses');
-            
-            if (isChecked) {
-                courseDiv.style.display = 'block';
-                hiddenCoursesDiv.style.display = 'none';
-
-                fetch('/fetch-courses/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': getCookie('csrftoken')
-                    },
-                    body: JSON.stringify({ semester: semester })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    courseDiv.innerHTML = '';
-
-                    const table = document.createElement('table');
-                    table.classList.add('table');
-
-                    const thead = document.createElement('thead');
-                    const headerRow = document.createElement('tr');
-                    const header1 = document.createElement('th');
-                    header1.textContent = 'Course Code';
-                    const header2 = document.createElement('th');
-                    header2.textContent = 'Course Name';
-                    const header3 = document.createElement('th');
-                    header3.textContent = 'Select';
-
-                    headerRow.appendChild(header3);
-                    headerRow.appendChild(header1);
-                    headerRow.appendChild(header2);
-                    thead.appendChild(headerRow);
-                    table.appendChild(thead);
-
-                    const tbody = document.createElement('tbody');
-                    data.courses.forEach(course => {
-                        const row = document.createElement('tr');
-                        const codeCell = document.createElement('td');
-                        codeCell.textContent = course.course_code;
-                        const nameCell = document.createElement('td');
-                        nameCell.textContent = course.course_name;
-                        const selectCell = document.createElement('td');
-                        const checkbox = document.createElement('input');
-                        checkbox.type = 'checkbox';
-                        checkbox.name = 'courses';
-                        checkbox.value = course.id;
-                        
-                        if (isChecked) {
-                            checkbox.checked = true;
-                        }
-                        
-                        selectCell.appendChild(checkbox);
-                        row.appendChild(selectCell);
-                        row.appendChild(codeCell);
-                        row.appendChild(nameCell);
-                        tbody.appendChild(row);
-                    });
-
-                    table.appendChild(tbody);
-                    courseDiv.appendChild(table);
+            function showStep(index) {
+                steps.forEach((step, i) => {
+                    step.classList.toggle("active", i === index);
+                    indicators[i].classList.toggle("active", i === index);
                 });
-            } else {
-                courseDiv.style.display = 'none';
-                hiddenCoursesDiv.style.display = 'block';
-            }
-        }
+                currentStep = index;
 
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
+                initializeSearchFields();
+            }
+
+            function initializeSearchFields() {
+                const searchCourses = document.getElementById('searchCourses');
+                const searchRooms = document.getElementById('searchRooms');
+                const searchExamDays = document.getElementById('searchExamDays');
+                
+                const coursesList = document.getElementById('coursesList');
+                const roomsList = document.getElementById('roomsList');
+                const examDaysList = document.getElementById('examDaysList');
+
+                if (searchCourses) {
+                    searchCourses.addEventListener('input', function() {
+                        filterList(coursesList, searchCourses.value);
+                    });
+                }
+
+                if (searchRooms) {
+                    searchRooms.addEventListener('input', function() {
+                        filterList(roomsList, searchRooms.value);
+                    });
+                }
+
+                if (searchExamDays) {
+                    searchExamDays.addEventListener('input', function() {
+                        filterList(examDaysList, searchExamDays.value);
+                    });
+                }
+            }
+
+            function filterList(listContainer, searchValue) {
+                if (!listContainer) return;
+                const items = listContainer.getElementsByTagName('label');
+                for (let i = 0; i < items.length; i++) {
+                    const label = items[i];
+                    const itemText = label.textContent || label.innerText;
+                    if (itemText.toLowerCase().includes(searchValue.toLowerCase())) {
+                        label.style.display = "";
+                    } else {
+                        label.style.display = "none";
                     }
                 }
             }
-            return cookieValue;
+
+            document.getElementById("next-1").addEventListener("click", () => showStep(1));
+            document.getElementById("prev-2").addEventListener("click", () => showStep(0));
+            document.getElementById("next-2").addEventListener("click", () => showStep(2));
+            document.getElementById("prev-3").addEventListener("click", () => showStep(1));
+
+            document.getElementById("selectFirstSemester").addEventListener("change", function () {
+                fetchCoursesBySemester(this.checked, "first");
+                updateSemesterInStep3(this.checked, "First Semester");
+            });
+
+            document.getElementById("selectSecondSemester").addEventListener("change", function () {
+                fetchCoursesBySemester(this.checked, "second");
+                updateSemesterInStep3(this.checked, "Second Semester");
+            });
+
+            function updateSemesterInStep3(isChecked, semesterName) {
+            const examSemesterField = document.getElementById("id_exam_semester");
+
+            if (isChecked) {
+                examSemesterField.value = semesterName;
+                examSemesterField.disabled = false;
+            } else {
+                examSemesterField.value = "";
+                examSemesterField.disabled = false;
+            }
         }
+
+
+
+            function fetchCoursesBySemester(isChecked, semester) {
+                if (isChecked) {
+                    fetch("/fetch-courses/", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "X-CSRFToken": getCookie("csrftoken"),
+                        },
+                        body: JSON.stringify({ semester: semester }),
+                    })
+                        .then((response) => response.json())
+                        .then((data) => {
+                            courseDiv.innerHTML = data.courses
+                                .map(
+                                    (course) =>
+                                        `<label>
+                                            <input type="checkbox" name="courses" value="${course.id}" checked />
+                                            ${course.course_code} - ${course.course_name}
+                                        </label>`
+                                )
+                                .join("");
+
+                            if (semester === "first") {
+                                examSemesterField.value = "First Semester";
+                            } else if (semester === "second") {
+                                examSemesterField.value = "Second Semester";
+                            }
+                            examSemesterField.disabled = true;
+                        })
+                        .catch((error) => console.error("Error fetching courses:", error));
+                } else {
+                    courseDiv.innerHTML = "";
+                    examSemesterField.value = "";
+                    examSemesterField.disabled = false;
+                }
+            }
+
+            function getCookie(name) {
+                const cookies = document.cookie.split(";").map((cookie) => cookie.trim());
+                for (let cookie of cookies) {
+                    if (cookie.startsWith(`${name}=`)) {
+                        return cookie.substring(name.length + 1);
+                    }
+                }
+                return null;
+            }
+
+            initializeSearchFields();
+        });
+
+        const courseDiv = document.getElementById("courseCheckboxes");
+
+    function checkCheckboxes() {
+        const checkboxes = courseDiv.querySelectorAll('input[type="checkbox"]');
+        let anyUnchecked = false;
+        checkboxes.forEach((checkbox) => {
+            if (!checkbox.checked) {
+                anyUnchecked = true;
+            }
+        });
+
+        if (anyUnchecked) {
+            courseDiv.classList.add("checkbox-error");
+        } else {
+            courseDiv.classList.remove("checkbox-error");
+        }
+    }
+
+    courseDiv.addEventListener('change', checkCheckboxes);
+
+    checkCheckboxes();
     </script>
     <script>
         document.addEventListener("DOMContentLoaded", function () {

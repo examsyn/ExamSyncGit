@@ -6,7 +6,6 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/1.10.24/css/jquery.dataTables.min.css">
     <style>
-        /* Basic styles for the sidebar */
         .sidebar {
             height: 100%;
             width: 256px;
@@ -21,12 +20,12 @@
             border-top-right-radius: 30px;
             border-bottom-right-radius: 30px;
             border-right: 3px solid #FCB316;
-            z-index: 1000; /* Ensure the sidebar is above other elements */
-            transition: transform 0.3s ease; /* Animation for sidebar movement */
+            z-index: 1000;
+            transition: transform 0.3s ease;
         }
 
         .sidebar.closed {
-            transform: translateX(-250px); /* Move sidebar entirely off-screen */
+            transform: translateX(-250px);
         }
 
         .sidebar .user-info {
@@ -76,13 +75,13 @@
         .sidebar-toggle {
             position: fixed;
             top: -5px;
-            left: -5px; /* Fixed position */
+            left: -5px;
             cursor: pointer;
             background-color: #FCB316;
             color: #fff;
             padding: 10px;
             border-radius: 5px;
-            z-index: 1000; /* Ensure toggle button stays above the sidebar */
+            z-index: 1000;
         }
 
         .logout-button {
@@ -118,7 +117,7 @@
             bottom: 0;
             height: 30px;
             width: 100%;
-            z-index: 0; /* Ensure the footer stays behind the sidebar */
+            z-index: 0;
         }
 
         .room-list-table {
@@ -137,65 +136,48 @@
             color: #fff;
         }
 
-        .search-form {
-            margin-bottom: 20px;
-            text-align: right;
+        .modal-content {
+            background-color: #fff;
+            border-radius: 8px;
         }
 
-        .search-form input[type="text"] {
-            padding: 5px;
-            width: 200px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
+        .form-container {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
         }
 
-        .search-form button {
-            padding: 5px 10px;
-            background-color: #FCB316;
-            border: none;
-            border-radius: 5px;
-            color: white;
-            cursor: pointer;
+        .form-container label {
+            font-weight: bold;
+            color: #1A1851;
+            margin-bottom: 5px;
+            display: block;
         }
 
-        .search-form button:hover {
-            background-color: #e0a700;
-        }
-
-        .search-form {
-            margin-bottom: 20px;
-            text-align: right;
-        }
-        
-        .search-form input[type="text"] {
-            padding: 5px;
-            width: 200px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-        }
-        
-        .search-form button {
-            padding: 5px 10px;
-            background-color: #FCB316;
-            border: none;
-            border-radius: 5px;
-            color: white;
-            cursor: pointer;
-        }
-        
-        .search-form button:hover {
-            background-color: #e0a700;
-        }
-        
-        .room-list-table th, .room-list-table td {
+        .form-container input[type="text"],
+        .form-container input[type="password"],
+        .form-container select {
             padding: 10px;
-            border: 1px solid #ddd;
-            text-align: left;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 100%;
+            box-sizing: border-box;
         }
-        
-        .room-list-table th {
-            background-color: #1A1851;
+
+        .form-container button {
+            background-color: #FCB316;
             color: #fff;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        .form-container button:hover {
+            background-color: #e0a200;
         }
 
         img {
@@ -219,6 +201,31 @@
             height: auto;
             margin-bottom: 30px;
         }
+
+        .search-form {
+            margin-bottom: 20px;
+            text-align: right;
+        }
+
+        .search-form input[type="text"] {
+            padding: 5px;
+            width: 200px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        .search-form button {
+            padding: 5px 10px;
+            background-color: #FCB316;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+        }
+
+        .search-form button:hover {
+            background-color: #e0a700;
+        }
     </style>
 </head>
 <body>
@@ -227,9 +234,25 @@
 
     <div class="main-content">
         <h1>Room List</h1>
+
+        {% if messages %}
+            <div class="alert-messages">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
         <div class="search-form">
-          <input type="text" id="search-input" placeholder="SEARCH FOR ROOM" value="{{ search_query }}">
+            <form method="get">
+                <input type="text" name="search" id="search-input" placeholder="SEARCH FOR ROOM" value="{{ search_query }}">
+                <button type="submit" class="btn btn-secondary">Search</button>
+                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#createRoomModal">
+                    Create Room
+                </button>
+            </form>
         </div>
+
         <table class="room-list-table" id="room-list-table">
             <thead>
                 <tr>
@@ -241,7 +264,7 @@
                     <th>Actions</th>
                 </tr>
             </thead>
-            <tbody id="room-list-body">
+            <tbody>
                 {% for room in rooms %}
                     <tr>
                         <td>{{ room.building_id }}</td>
@@ -261,55 +284,48 @@
                             </a>
                         </td>
                     </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="6">No rooms found.</td>
+                    </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 
+    <div class="modal fade" id="createRoomModal" tabindex="-1" role="dialog" aria-labelledby="createRoomModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="createRoomModalLabel">Create Room</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form method="POST">
+                        {% csrf_token %}
+                        {{ form.as_p }}
+                        <button type="submit" class="btn btn-primary">Save Room</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            const searchInput = document.getElementById('search-input');
-            const roomListBody = document.getElementById('room-list-body');
-
-            searchInput.addEventListener('input', function () {
-                const query = searchInput.value;
-
-                fetch(`/rooms/?search=${encodeURIComponent(query)}`, {
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    console.log(data);  // Debugging line to check fetched data
-                    let html = '';
-                    data.rooms.forEach(room => {
-                        html += `
-                            <tr>
-                                <td>${room.room_name}</td>
-                                <td>${room.building_id}</td>
-                                <td>${room.roomType}</td>
-                                <td>${room.modality}</td>
-                                <td>
-                                    <form action="/delete-room/${room.room_id}/" method="post" style="display: inline;">
-                                        <input type="hidden" name="csrfmiddlewaretoken" value="${document.querySelector('[name=csrfmiddlewaretoken]').value}">
-                                        <button type="submit" class="btn" title="Delete" style="background: none; border: none;">
-                                            <i class="fas fa-trash" style="color: red; font-size: 18px;"></i>
-                                        </button>
-                                    </form>
-                                    <a href="/edit-room/${room.room_id}/" class="btn" title="Edit" style="background: none; border: none;">
-                                        <i class="fas fa-edit" style="color: #fcb316; font-size: 18px;"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                        `;
-                    });
-                    roomListBody.innerHTML = html;
-                })
-                .catch(error => console.error('Error:', error));
-            });
+        $('#createRoomModal').on('shown.bs.modal', function () {
+            $('body').css('overflow', 'auto');
         });
 
+        $('#createRoomModal').on('hidden.bs.modal', function () {
+            $('body').css('overflow', '');
+        });
+    </script>
+    <script>
         document.addEventListener("DOMContentLoaded", function () {
             const sidebar = document.querySelector('.sidebar');
             const mainContent = document.querySelector('.main-content');

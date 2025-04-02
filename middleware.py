@@ -12,6 +12,6 @@ class Redirect404Middleware:
         response = self.get_response(request)
         
         if response.status_code == 404:
-            return redirect(reverse('select_login_page'))
+            return redirect(reverse('login_page'))
         
         return response

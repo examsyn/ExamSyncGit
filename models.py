@@ -27,6 +27,11 @@ class User(AbstractBaseUser, PermissionsMixin):
         ('Inactive', 'Inactive'),
     )
 
+    WORK_CHOICES = (
+        ('Full-Time', 'Full-Time'),
+        ('Part-Time', 'Part-Time'),
+    )
+
     user_id = models.AutoField(primary_key=True)
     username = models.CharField(max_length=55, unique=True)
     password = models.CharField(max_length=255)
@@ -35,6 +40,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     last_name = models.CharField(max_length=55)
     email_address = models.EmailField(max_length=255, blank=True)
     contact_number = models.CharField(max_length=55, blank=True)
+    work_time = models.CharField(max_length=10, choices=WORK_CHOICES, default='Full-Time')
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='Active')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -200,8 +206,8 @@ class Section(models.Model):
 # PROGRAMSECTION
 class ProgramSection(models.Model):
     programSection_id = models.AutoField(primary_key=True)
-    section = models.ForeignKey('Section', on_delete=models.CASCADE)  # Links to Section
-    program = models.ForeignKey('Program', on_delete=models.CASCADE)  # Links to Program
+    section = models.ForeignKey('Section', on_delete=models.CASCADE) 
+    program = models.ForeignKey('Program', on_delete=models.CASCADE) 
 
     def __str__(self):
         return f"{self.program} - {self.section}"
@@ -307,7 +313,7 @@ class ExamSchedule(models.Model):
     day = models.DateField()
     start_time = models.TimeField()
     end_time = models.TimeField()
-    exam_duration = models.IntegerField(null=True, blank=True)  # Duration in minutes
+    exam_duration = models.IntegerField(null=True, blank=True) 
     proctor = models.ForeignKey(User, on_delete=models.CASCADE, related_name="proctored_exams")
     sectionYearSem = models.ForeignKey('SectionYearSem', on_delete=models.CASCADE)
     courseYearSem = models.ForeignKey('CourseYearSem', on_delete=models.CASCADE)
@@ -322,10 +328,10 @@ class ExamSchedule(models.Model):
             day=self.day,
             start_time__lt=self.end_time,
             end_time__gt=self.start_time,
-            courseProgram=self.courseProgram,  # Same course program
-            courseYearSem=self.courseYearSem,  # Same courseYearSem
+            courseProgram=self.courseProgram,
+            courseYearSem=self.courseYearSem, 
             status="Scheduled"
-        ).exclude(pk=self.pk)  # Exclude the current object if it's an update
+        ).exclude(pk=self.pk)
 
         if overlapping_schedules.exists():
             raise ValidationError(
@@ -359,7 +365,7 @@ class ExamRemarks(models.Model):
     remarksDescription = models.TextField()
     examSchedule = models.ForeignKey(ExamSchedule, on_delete=models.CASCADE)
     status = models.CharField(
-        max_length=20,  # Ensure this matches the length of the values you're using
+        max_length=20,
         choices=[('Pending', 'Pending'), ('Approved', 'Approved'), ('Declined', 'Declined')],
         default='Pending'
     )
